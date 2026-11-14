@@ -1,4 +1,4 @@
-﻿seed: ../donors/lab3_donor.pkt
+seed: ../donors/lab3_donor.pkt
 
 defaults:
   power: true

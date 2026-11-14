@@ -1,4 +1,4 @@
-﻿seed: ../donors/lab3_donor.pkt
+seed: ../donors/lab3_donor.pkt
 
 devices:
   - {model: 2911, name: R1}
