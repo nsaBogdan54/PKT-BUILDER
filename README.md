@@ -1,13 +1,16 @@
-﻿!# PKT-BUILDER
 
-!Собирает рабочий `.pkt` для **Cisco Packet Tracer** из YAML-описания и умеет
-!обратное — выгружать `.pkt` в YAML.
+<div align="center">
+<h1> PKT-BUILDER </h1>
 
-![![Python](https://img.shields.io/badge/python-3.10%2B-3776AB?logo=python&logoColor=white)](https://www.python.org/)
-![![License](https://img.shields.io/badge/license-MIT-green)](LICENSE)
-![![Tests](https://github.com/nsaBogdan54/PKT-BUILDER/actions/workflows/tests.yml/badge.svg)](https://github.com/nsaBogdan54/PKT-BUILDER/actions/workflows/tests.yml)
-![![Packet Tracer](https://img.shields.io/badge/Packet%20Tracer-9.0.0-1ba0d7)](https://www.netacad.com/)
+Собирает рабочий `.pkt` для **Cisco Packet Tracer** из YAML-описания и умеет
+обратное — выгружать `.pkt` в YAML.
 
+[![Python](https://img.shields.io/badge/python-3.10%2B-3776AB?logo=python&logoColor=white)](https://www.python.org/)
+[![License](https://img.shields.io/badge/license-MIT-green)](LICENSE)
+[![Tests](https://github.com/nsaBogdan54/PKT-BUILDER/actions/workflows/tests.yml/badge.svg)](https://github.com/nsaBogdan54/PKT-BUILDER/actions/workflows/tests.yml)
+[![Packet Tracer](https://img.shields.io/badge/Packet%20Tracer-9.0.0-1ba0d7)](https://www.netacad.com/)
+
+</div>
 ![Топология lab8, открытая в Packet Tracer 9.0.0](docs/topology.png)
 
 Скриншот — `8lab.pkt`, собранный этим инструментом из
@@ -18,6 +21,7 @@
 python -m pkt_builder -c configs\configuration.yml -i projects\my_new.pkt
 python -m pkt_builder --export 9lab.pkt -o 9lab.yml
 ```
+
 
 ## Установка
 
@@ -49,6 +53,7 @@ pip install pyyaml
 `PKT_BUILDER_YAML=mini` в окружении принудительно включает встроенный парсер —
 полезно, чтобы проверить, что конфиг не зависит от PyYAML.
 
+
 ### Структура
 
 ```
@@ -77,6 +82,7 @@ pkt_builder/                  корень репозитория
 └─ docs/                      формат, схема, валидация
 ```
 
+
 ## Ключи
 
 | Ключ | Значение |
@@ -97,6 +103,7 @@ pkt_builder/                  корень репозитория
 
 Exit codes: `0` — успех, `1` — ошибка конфига или сборки, `2` — Packet Tracer
 не найден (`--accept`).
+
 
 ## Схема YAML
 
@@ -128,6 +135,7 @@ links:
   - [R1, g0/0/0, R2, g0/1, copper]
 ```
 
+
 ### Устройства
 
 * `model` — ключ из `pkt_core/data/device_templates.json` (`2911`, `2811`,
@@ -138,6 +146,7 @@ links:
   выводе `show running-config`. Лишние пробелы в начале сохраняются.
   Поддерживаются подстановки `{{mac:PH1}}`, `{{client_id:PH1}}`, `{{name}}` —
   MAC-адреса читаются из XML уже после создания устройств.
+
 
 ### Линки
 
@@ -169,6 +178,7 @@ File».
 Порядок «устройства → линки → конфиги» соблюдается автоматически, поэтому
 `clock rate` на DCE не затирается конфигом.
 
+
 ## Проверка результата
 
 После сборки выполняется структурная проверка (без Packet Tracer): тег
@@ -197,6 +207,7 @@ C:\Program Files (x86)\Cisco Packet Tracer 8.2.2\bin\PacketTracer.exe
 `tools/pt_accept.ps1`. Скрипт закрывает запущенный Packet Tracer и после
 проверки тоже.
 
+
 ## Экспорт `.pkt` → YAML
 
 ```powershell
@@ -219,6 +230,7 @@ python -m pkt_builder --export 9lab.pkt          # -> 9lab.yml рядом с .pk
 собирает ту же топологию (проверено round-trip: устройства, конфиги и линки
 совпадают, файл принимается PT 9.0.0).
 
+
 ## Примеры
 
 | Файл | Что показывает |
@@ -230,6 +242,7 @@ python -m pkt_builder --export 9lab.pkt          # -> 9lab.yml рядом с .pk
 | `examples/minimal.yml` | минимум: одно устройство и конфиг |
 | `examples/bad_phone_port.yml` | как выглядит ошибка про порт телефона |
 
+
 ## Тесты
 
 ```powershell
@@ -240,6 +253,7 @@ python -m unittest discover -s tests -p "test_*.py"
 меняют. `--accept` в тесты не входит: ему нужен установленный Packet Tracer.
 Тесты, требующие PyYAML, пропускаются, если его нет.
 
+
 ## Ограничения
 
 * Модели, у которых имена интерфейсов не выводятся из шаблона (концентраторы,
@@ -249,6 +263,7 @@ python -m unittest discover -s tests -p "test_*.py"
 * Wireless-связи (`set_wireless`) через YAML пока не настраиваются — только
   кабельные линки.
 * `--accept` работает только на Windows (см. выше).
+
 
 ## Отказ от ответственности (Disclaimer)
 
