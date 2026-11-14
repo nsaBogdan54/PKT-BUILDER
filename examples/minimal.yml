@@ -1,6 +1,6 @@
 # Минимальный конфиг: одно устройство.
 #
-#   python pkt_create.py -c examples\minimal.yml -i out.pkt
+#   python pkt_builder.py -c examples\minimal.yml -i out.pkt
 
 model: 2911
 name: HQswitch

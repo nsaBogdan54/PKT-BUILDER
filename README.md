@@ -4,7 +4,7 @@
 обратное — выгружать `.pkt` в YAML.
 
 [![Python](https://img.shields.io/badge/python-3.10%2B-3776AB?logo=python&logoColor=white)](https://www.python.org/)
-[![License](https://img.shields.io/badge/license-GPL--3.0-orange)](LICENSE)
+[![License](https://img.shields.io/badge/license-MIT-green)](LICENSE)
 [![Tests](https://github.com/nsaBogdan54/PKT-BUILDER/actions/workflows/tests.yml/badge.svg)](https://github.com/nsaBogdan54/PKT-BUILDER/actions/workflows/tests.yml)
 [![Packet Tracer](https://img.shields.io/badge/Packet%20Tracer-9.0.0-1ba0d7)](https://www.netacad.com/)
 
@@ -15,8 +15,8 @@
 окна «Incompatible File».
 
 ```powershell
-python pkt_create.py -c configs\configuration.yml -i projects\my_new.pkt
-python pkt_create.py --export 9lab.pkt -o 9lab.yml
+python pkt_builder.py -c configs\configuration.yml -i projects\my_new.pkt
+python pkt_builder.py --export 9lab.pkt -o 9lab.yml
 ```
 
 ## Установка
@@ -27,7 +27,7 @@ python pkt_create.py --export 9lab.pkt -o 9lab.yml
 ```powershell
 git clone https://github.com/nsaBogdan54/PKT-BUILDER.git
 cd pkt_builder
-python pkt_create.py -c examples\lab8.yml -i 8lab_new.pkt
+python pkt_builder.py -c examples\lab8.yml -i 8lab_new.pkt
 ```
 
 Опционально, чтобы YAML парсился через PyYAML (быстрее и строже):
@@ -36,14 +36,14 @@ python pkt_create.py -c examples\lab8.yml -i 8lab_new.pkt
 pip install pyyaml
 ```
 
-`PKT_CREATE_YAML=mini` в окружении принудительно включает встроенный парсер —
+`PKT_BUILDER_YAML=mini` в окружении принудительно включает встроенный парсер —
 полезно, чтобы проверить, что конфиг не зависит от PyYAML.
 
 ### Структура
 
 ```
 pkt_builder/
-├─ pkt_create.py        CLI: YAML -> .pkt и .pkt -> YAML
+├─ pkt_builder.py        CLI: YAML -> .pkt и .pkt -> YAML
 ├─ build_8lab.py        скрипт, которым собран эталонный 8lab.pkt
 ├─ 8lab.pkt             эталонный результат (принят PT 9.0.0)
 ├─ pkt_core/            библиотека .pkt: Lab(), кодек, крипто, шаблоны моделей
@@ -160,7 +160,7 @@ File».
 Реальная проверка:
 
 ```powershell
-python pkt_create.py -c examples\lab8.yml -i out.pkt --accept
+python pkt_builder.py -c examples\lab8.yml -i out.pkt --accept
 ```
 
 `--accept` запускает `tools/pt_accept.ps1`, который ищет Packet Tracer по
@@ -181,8 +181,8 @@ C:\Program Files (x86)\Cisco Packet Tracer 8.2.2\bin\PacketTracer.exe
 ## Экспорт `.pkt` → YAML
 
 ```powershell
-python pkt_create.py --export 9lab.pkt -o 9lab.yml
-python pkt_create.py --export 9lab.pkt          # -> 9lab.yml рядом с .pkt
+python pkt_builder.py --export 9lab.pkt -o 9lab.yml
+python pkt_builder.py --export 9lab.pkt          # -> 9lab.yml рядом с .pkt
 ```
 
 Восстанавливается всё, что нужно для повторной сборки:
@@ -231,12 +231,12 @@ python -m unittest discover -s tests -p "test_*.py"
   кабельные линки.
 * `--accept` работает только на Windows (см. выше).
 
-## Благодарности и правовая информация
+## Отказ от ответственности (Disclaimer)
 
-Этот проект использует модифицированную версию библиотеки декодирования и генерации `.pkt` файлов из репозитория [aacanadaa/packet-tracer-pkt-format](https://github.com/aacanadaa/packet-tracer-pkt-format), которая распространяется под лицензией GNU GPLv3.
-
-**Отказ от ответственности:** Данный инструмент создан исключительно для автоматизации учебных лабораторных работ и образовательных целей. Он не аффилирован с Cisco Systems, Inc., не нарушает лицензионное соглашение (EULA) при использовании в учебных целях и не предназначен для обхода систем оценки или использования в коммерческих производственных сетях.
+1. **Образовательные цели:** Данный инструмент создан исключительно для автоматизации учебных лабораторных работ и образовательных целей.
+2. **Расходы на API:** Автор не несет ответственности за любые финансовые расходы пользователей, связанные с использованием сторонних API (например, RouterAI, OpenAI и др.) для генерации YAML-конфигураций или работы скрипта.
+3. **Cisco Packet Tracer EULA:** Cisco Packet Tracer является проприетарным программным обеспечением Cisco Systems, Inc. Использование данного генератора не должно нарушать Лицензионное соглашение конечного пользователя (EULA) Cisco. Автор не аффилирован с Cisco Systems и не несет ответственности за последствия использования сгенерированных `.pkt` файлов в коммерческой или производственной среде.
 
 ## Лицензия
 
-Этот проект распространяется под лицензией [GNU General Public License v3.0](LICENSE).
+[MIT](LICENSE).

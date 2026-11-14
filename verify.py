@@ -3,7 +3,7 @@
 """verify.py -- structural checks on a generated .pkt, without opening PT.
 
 These are the failures Packet Tracer reports as "Incompatible File", caught
-before the file ever reaches it (see ``pkt_create.md`` section 11):
+before the file ever reaches it (see ``pkt_builder.md`` section 11):
 
 * ``VERSION`` newer than the running Packet Tracer
 * a link whose ``<PORT>`` does not exist on the device

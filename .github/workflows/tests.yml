@@ -31,5 +31,5 @@ jobs:
 
       - name: Run tests (bundled miniyaml)
         env:
-          PKT_CREATE_YAML: mini
+          PKT_BUILDER_YAML: mini
         run: python -m unittest discover -s tests -p "test_*.py" -v

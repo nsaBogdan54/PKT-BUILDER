@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 """miniyaml.py -- a small, dependency-free YAML subset parser.
 
-Written for ``pkt_create.py`` because the tool must run on a stock Python with
+Written for ``pkt_builder.py`` because the tool must run on a stock Python with
 no ``pip install`` step (same rule as ``pkt_core``).  It supports exactly the
 YAML this tool's config format uses:
 
@@ -10,7 +10,7 @@ YAML this tool's config format uses:
 * ``- key: value`` (a mapping that starts inside a sequence item)
 * flow collections: ``[a, b]``, ``{k: v}`` and single-pair maps inside a flow
   sequence, i.e. ``[A, B, dce: A, clock: 64000]`` (legal YAML, and exactly the
-  shape the pkt_create link syntax uses)
+  shape the pkt_builder link syntax uses)
 * literal (``|``) and folded (``>``) block scalars, with ``-``/``+`` chomping
 * single- and double-quoted scalars, **including multi-line ones**: their line
   breaks are kept as real newlines (stock PyYAML folds them into spaces, which

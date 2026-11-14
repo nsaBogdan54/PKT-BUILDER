@@ -1,17 +1,17 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
-"""pkt_create.py -- build a Cisco Packet Tracer .pkt from a YAML description,
+"""pkt_builder.py -- build a Cisco Packet Tracer .pkt from a YAML description,
 and export a .pkt back to YAML.
 
 Usage::
 
-    pkt_create.py -c %USERPROFILE%\\configs\\configuration.yml -i %USERPROFILE%\\projects\\my_new.pkt
+    pkt_builder.py -c %USERPROFILE%\\configs\\configuration.yml -i %USERPROFILE%\\projects\\my_new.pkt
 
-    pkt_create.py -c lab.yml -i lab.pkt --seed my_pt.pkt
-    pkt_create.py -c lab.yml -i lab.pkt --check-only
-    pkt_create.py -c lab.yml -i lab.pkt --accept
+    pkt_builder.py -c lab.yml -i lab.pkt --seed my_pt.pkt
+    pkt_builder.py -c lab.yml -i lab.pkt --check-only
+    pkt_builder.py -c lab.yml -i lab.pkt --accept
 
-    pkt_create.py --export lab.pkt -o lab.yml
+    pkt_builder.py --export lab.pkt -o lab.yml
 
 The YAML schema is documented in ``pkt_builder/config.py`` and in README.md
 next to this script.  Exit codes: 0 = success, 1 = build/validation error,
@@ -27,7 +27,7 @@ import subprocess
 import sys
 
 HERE = pathlib.Path(__file__).resolve().parent      # pkt_builder/
-PROJECT = HERE.parent                               # pkt_create/
+PROJECT = HERE.parent                               # pkt_builder/
 sys.path.insert(0, str(HERE))                       # pkt_core lives here
 sys.path.insert(0, str(PROJECT))                    # so `pkt_builder` imports work
 
@@ -75,7 +75,7 @@ def load_config(path: pathlib.Path):
     better; ``miniyaml`` covers the same subset when it is not.
     """
     text = path.read_text(encoding="utf-8-sig")
-    backend = os.environ.get("PKT_CREATE_YAML", "").strip().lower()
+    backend = os.environ.get("PKT_BUILDER_YAML", "").strip().lower()
     if backend in ("mini", "miniyaml", "builtin"):
         try:
             return miniyaml.load(text), "miniyaml"
@@ -220,12 +220,12 @@ def run_accept(out_path: pathlib.Path) -> int:
 # --------------------------------------------------------------------------- #
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
-        prog="pkt_create.py",
+        prog="pkt_builder.py",
         description="Build a Cisco Packet Tracer .pkt from a YAML description, "
                     "or export a .pkt back to YAML.",
         epilog="Examples:\n"
-               "  pkt_create.py -c configs\\configuration.yml -i projects\\my_new.pkt\n"
-               "  pkt_create.py --export 9lab.pkt -o 9lab.yml\n",
+               "  pkt_builder.py -c configs\\configuration.yml -i projects\\my_new.pkt\n"
+               "  pkt_builder.py --export 9lab.pkt -o 9lab.yml\n",
         formatter_class=argparse.RawDescriptionHelpFormatter,
     )
     parser.add_argument("-c", "--config", metavar="YAML",

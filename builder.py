@@ -3,7 +3,7 @@
 """builder.py -- turn a :class:`~pkt_builder.config.LabSpec` into a .pkt file.
 
 The order of operations is not arbitrary; it is the one verified against Packet
-Tracer 9.0.0 (see ``pkt_create.md`` sections 5-8):
+Tracer 9.0.0 (see ``pkt_builder.md`` sections 5-8):
 
 1. ``Lab(seed=...)`` + ``prune_seed_devices()``
 2. ``add_device()`` for every device (modules installed right after)

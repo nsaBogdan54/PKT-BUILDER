@@ -6,7 +6,7 @@
 #     "Cisco Packet Tracer - C:\...\your.pkt"
 # so we just enumerate window titles and grep for "Incompatible File".
 #
-# Usage (from pkt_create/):
+# Usage (from pkt_builder/):
 #     powershell -NoProfile -ExecutionPolicy Bypass -File tools\pt_accept.ps1 -File .\8lab.pkt
 #
 # Exit code: 0 = ACCEPTED, 1 = REJECTED, 2 = PT not found.

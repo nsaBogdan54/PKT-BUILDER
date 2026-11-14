@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
-"""config.py -- the pkt_create YAML schema: parsing, normalisation, validation.
+"""config.py -- the pkt_builder YAML schema: parsing, normalisation, validation.
 
 The file describes a whole lab::
 

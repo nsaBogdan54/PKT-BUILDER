@@ -4,7 +4,7 @@
 build_8lab.py -- reference/template builder for lab 8 (Cisco 2811 CME + 2600 remote).
 
 This is the exact script that produced the accepted `8lab.pkt`. Copy it, change the
-device list / configs / addresses, and you get a new lab. See pkt_create.md for the
+device list / configs / addresses, and you get a new lab. See pkt_builder.md for the
 full explanation of every non-obvious decision (phone port naming, seed version,
 serial DCE, port power, ...).
 

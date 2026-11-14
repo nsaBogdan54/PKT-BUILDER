@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
-"""exporter.py -- turn a .pkt back into a pkt_create YAML description.
+"""exporter.py -- turn a .pkt back into a pkt_builder YAML description.
 
 The generated YAML is the inverse of :mod:`pkt_builder.builder`: it can be fed
-straight back to ``pkt_create.py -c`` to rebuild the same lab.
+straight back to ``pkt_builder.py -c`` to rebuild the same lab.
 
 What is recovered
 -----------------
@@ -274,11 +274,11 @@ def export_yaml(pkt_path: str | Path, source_label: str | None = None,
 
     doc = {
         "header": [
-            "Exported from %s by pkt_create.py --export" % (source_label or pkt_path.name),
+            "Exported from %s by pkt_builder.py --export" % (source_label or pkt_path.name),
             "Packet Tracer VERSION %s" % (version or "unknown"),
             "",
             "Rebuild with:",
-            "  python pkt_create.py -c <this file> -i <out.pkt>",
+            "  python pkt_builder.py -c <this file> -i <out.pkt>",
         ],
         "seed": seed_value or pkt_path.name,
         "devices": devices,

@@ -1,6 +1,6 @@
 ﻿#!/usr/bin/env python3
 # -*- coding: utf-8 -*-
-"""Tests for pkt_builder.  Run:  python pkt_builder/tests/test_pkt_create.py"""
+"""Tests for pkt_builder.  Run:  python pkt_builder/tests/test_pkt_builder.py"""
 from __future__ import annotations
 
 import os
@@ -23,7 +23,7 @@ from pkt_builder.exporter import PktExportError, export_yaml, dump_yaml  # noqa:
 from pkt_builder.ports import PortError, port_catalogue, resolve_port  # noqa: E402
 from pkt_builder.verify import verify_pkt                           # noqa: E402
 
-SCRIPT = PKG / "pkt_create.py"
+SCRIPT = PKG / "pkt_builder.py"
 EXAMPLES = PKG / "examples"
 SEED = PKG / "donors" / "lab3_donor.pkt"
 
@@ -239,7 +239,7 @@ class BuildTest(unittest.TestCase):
 
     def test_example_lab_with_miniyaml(self):
         proc, out = self._run(EXAMPLES / "lab8.yml", "lab8mini",
-                              {"PKT_CREATE_YAML": "mini"})
+                              {"PKT_BUILDER_YAML": "mini"})
         self.assertEqual(proc.returncode, 0, proc.stderr)
         self.assertTrue(verify_pkt(str(out)).ok)
 
