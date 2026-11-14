@@ -1,12 +1,12 @@
-﻿# PKT-BUILDER
+﻿!# PKT-BUILDER
 
-`Собирает рабочий `.pkt` для **Cisco Packet Tracer** из YAML-описания и умеет`
-обратное — выгружать `.pkt` в YAML.
+!Собирает рабочий `.pkt` для **Cisco Packet Tracer** из YAML-описания и умеет
+!обратное — выгружать `.pkt` в YAML.
 
-`[![Python](https://img.shields.io/badge/python-3.10%2B-3776AB?logo=python&logoColor=white)](https://www.python.org/)
-[![License](https://img.shields.io/badge/license-MIT-green)](LICENSE)
-[![Tests](https://github.com/nsaBogdan54/PKT-BUILDER/actions/workflows/tests.yml/badge.svg)](https://github.com/nsaBogdan54/PKT-BUILDER/actions/workflows/tests.yml)
-[![Packet Tracer](https://img.shields.io/badge/Packet%20Tracer-9.0.0-1ba0d7)](https://www.netacad.com/)`
+![![Python](https://img.shields.io/badge/python-3.10%2B-3776AB?logo=python&logoColor=white)](https://www.python.org/)
+![![License](https://img.shields.io/badge/license-MIT-green)](LICENSE)
+![![Tests](https://github.com/nsaBogdan54/PKT-BUILDER/actions/workflows/tests.yml/badge.svg)](https://github.com/nsaBogdan54/PKT-BUILDER/actions/workflows/tests.yml)
+![![Packet Tracer](https://img.shields.io/badge/Packet%20Tracer-9.0.0-1ba0d7)](https://www.netacad.com/)
 
 ![Топология lab8, открытая в Packet Tracer 9.0.0](docs/topology.png)
 
