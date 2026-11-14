@@ -101,7 +101,7 @@ devices:
 
   - model: 2620XM
     name: RemoteRouter
-    pos: 830, 220
+    pos: 430, 220
     install: WIC-2T
     cfg: |
       version 12.2
@@ -136,7 +136,7 @@ devices:
 
   - model: 3560-24PS
     name: RemoteSwitch
-    pos: 830, 400
+    pos: 430, 400
     cfg: |
       version 12.2
       hostname RemoteSwitch
@@ -160,7 +160,7 @@ devices:
 
   - model: 7960
     name: PH3
-    pos: 830, 580
+    pos: 430, 580
 
 links:
   - [CMERouter, FastEthernet0/0, CMESwitch, FastEthernet0/1, copper]
