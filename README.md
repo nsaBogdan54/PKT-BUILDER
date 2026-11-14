@@ -11,11 +11,14 @@
 [![Packet Tracer](https://img.shields.io/badge/Packet%20Tracer-9.0.0-1ba0d7)](https://www.netacad.com/)
 
 </div>
+<div align="center">
+
 ![Топология lab8, открытая в Packet Tracer 9.0.0](docs/topology.png)
 
+</div>
+
 Скриншот — `8lab.pkt`, собранный этим инструментом из
-[`examples/lab8.yml`](examples/lab8.yml) и открытый в Packet Tracer 9.0.0 без
-окна «Incompatible File».
+[`examples/lab8.yml`](examples/lab8.yml) и открытый в Packet Tracer 9.0.0 без ошибок.
 
 ```powershell
 python -m pkt_builder -c configs\configuration.yml -i projects\my_new.pkt
