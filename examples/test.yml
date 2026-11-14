@@ -1,0 +1,73 @@
+﻿seed: ../donors/lab3_donor.pkt
+
+defaults:
+  power: true
+
+devices:
+  - model: 2911
+    name: R1
+    pos: 200, 100
+    install: HWIC-2T
+    cfg: |
+      hostname R1
+      no ip domain-lookup
+      interface FastEthernet0/0
+       ip address 10.0.0.1 255.255.255.0
+       no shutdown
+      interface Serial0/0/0
+       ip address 10.1.1.1 255.255.255.252
+       clock rate 64000
+       no shutdown
+      end
+
+  - model: 2911
+    name: R2
+    pos: 600, 100
+    install: HWIC-2T
+    cfg: |
+      hostname R2
+      no ip domain-lookup
+      interface FastEthernet0/0
+       ip address 10.0.1.1 255.255.255.0
+       no shutdown
+      interface Serial0/0/0
+       ip address 10.1.1.2 255.255.255.252
+       no shutdown
+      end
+
+  - model: 3560-24PS
+    name: SW1
+    pos: 200, 300
+
+  - model: 3560-24PS
+    name: SW2
+    pos: 600, 300
+
+  - model: 7960
+    name: PH1
+    pos: 100, 500
+
+  - model: PC-PT
+    name: PC1
+    pos: 300, 500
+    pc_ip: [10.0.0.10, 255.255.255.0, 10.0.0.1]
+
+  - model: PC-PT
+    name: PC2
+    pos: 700, 500
+    pc_ip: [10.0.1.10, 255.255.255.0, 10.0.1.1]
+
+links:
+  # Форма 1: auto (молния) — всё само
+  - auto: [R1, SW1]
+  - auto: [R2, SW2]
+
+  # Форма 2: auto с подсказками для serial
+  - auto: [R1, R2, dce: R1, clock: 64000]
+
+  # Форма 3: явные порты, тип выводится из имён
+  - [SW1, Fa0/2, PH1, Switch]
+  - [SW1, Fa0/3, PC1, FastEthernet0]
+
+  # Форма 4: явные порты + тип кабеля
+  - [SW2, Fa0/2, PC2, FastEthernet0, copper]

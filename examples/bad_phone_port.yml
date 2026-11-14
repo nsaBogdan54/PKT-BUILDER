@@ -1,0 +1,9 @@
+﻿seed: ../donors/lab3_donor.pkt
+
+devices:
+  - {model: 2911, name: R1}
+  - {model: 7960, name: PH1}
+
+links:
+  # 7960 has no FastEthernet0/0 -- must be reported, not silently accepted
+  - [R1, GigabitEthernet0/0, PH1, FastEthernet0/0]

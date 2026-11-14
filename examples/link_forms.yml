@@ -1,0 +1,15 @@
+﻿# exercise every documented link form
+seed: ../donors/lab3_donor.pkt
+
+devices:
+  - {model: 2911, name: CMERouter, pos: [200, 200], install: HWIC-2T}
+  - {model: 3560-24PS, name: CMESwitch, pos: [200, 400]}
+  - {model: 7960, name: PH1}
+  - {model: 2620XM, name: RemoteRouter, install: WIC-2T}
+  - {model: 3560-24PS, name: RemoteSwitch}
+
+links:
+  - auto: [CMERouter, CMESwitch]
+  - auto: [CMERouter, RemoteRouter, dce: CMERouter, clock: 64000]
+  - [CMESwitch, Fa0/2, PH1, Switch]
+  - [RemoteRouter, FastEthernet0/0, RemoteSwitch, FastEthernet0/1, copper]

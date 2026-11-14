@@ -1,0 +1,47 @@
+# --- Python ---
+__pycache__/
+*.py[cod]
+*$py.class
+*.egg-info/
+.eggs/
+build/
+dist/
+.venv/
+venv/
+env/
+.mypy_cache/
+.pytest_cache/
+.ruff_cache/
+.coverage
+.coverage.*
+htmlcov/
+.tox/
+
+# --- scratch output ---
+# Anything produced while experimenting; the reference files stay tracked.
+finall/
+*.roundtrip.pkt
+*.rt.pkt
+*.tmp
+*.bak
+*.orig
+*.log
+
+# --- Packet Tracer files ---
+# .pkt are binary, so only the files the tool actually needs are kept:
+# the donors (templates whose VERSION is known to load) and the 8lab reference.
+*.pkt
+*.pka
+*.pkt.gz
+!donors/*.pkt
+!8lab.pkt
+
+# --- OS / editor ---
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+.DS_Store
+.idea/
+.vscode/
+*.swp
+*~

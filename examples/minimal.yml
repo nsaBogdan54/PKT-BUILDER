@@ -1,0 +1,17 @@
+﻿# Минимальный конфиг: одно устройство.
+#
+#   python pkt_builder\pkt_create.py -c pkt_builder\examples\minimal.yml -i out.pkt
+
+model: 2911
+name: HQswitch
+pos: 200, 235
+cfg: |
+  hostname HQswitch
+  enable secret class
+  interface GigabitEthernet0/0
+   ip address 10.0.0.1 255.255.255.0
+   no shutdown
+  line con 0
+   password cisco
+   login
+  end

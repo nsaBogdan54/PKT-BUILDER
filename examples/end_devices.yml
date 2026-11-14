@@ -1,0 +1,14 @@
+﻿seed: ../donors/lab3_donor.pkt
+
+devices:
+  - {model: 2911, name: R1, install: [HWIC-2T]}
+  - {model: 2960-24TT, name: SW1}
+  - {model: PC-PT, name: PC1, pc_ip: [192.168.1.10, 255.255.255.0, 192.168.1.1]}
+  - {model: Server-PT, name: SRV1, pc_ip: [192.168.1.50, 255.255.255.0, 192.168.1.1]}
+  - {model: 7960, name: PH1, power: false}
+
+links:
+  - auto: [R1, SW1]
+  - auto: [SW1, PC1]
+  - auto: [SW1, SRV1]
+  - [SW1, Fa0/4, PH1, Switch]

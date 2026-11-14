@@ -1,0 +1,171 @@
+﻿# pkt_create -- lab 8 (CME + remote site) written in the YAML format.
+#
+#   python pkt_builder\pkt_create.py -c pkt_builder\examples\lab8.yml -i 8lab.yml.pkt
+
+devices:
+  - model: 2811
+    name: CMERouter
+    pos: 200, 220
+    install: HWIC-2T
+    cfg: |
+      version 15.1
+      hostname CMERouter
+      enable secret class
+      no ip domain-lookup
+      ip dhcp excluded-address 10.20.1.1 10.20.1.10
+      !
+      ip dhcp pool VOICE
+       network 10.20.1.0 255.255.255.0
+       default-router 10.20.1.1
+       option 150 ip 10.20.1.1
+      !
+      interface FastEthernet0/0
+       description To-CMESwitch-trunk
+       ip address 10.20.1.1 255.255.255.0
+       no shutdown
+      !
+      interface Serial0/0/0
+       description To-RemoteRouter
+       ip address 192.168.1.1 255.255.255.252
+       no shutdown
+      !
+      router eigrp 1
+       network 10.0.0.0
+       network 192.168.1.0
+       no auto-summary
+      !
+      telephony-service
+       max-ephones 5
+       max-dn 5
+       ip source-address 10.20.1.1 port 2000
+      !
+      ephone-dn 1
+       number 1001
+      ephone-dn 2
+       number 1002
+      ephone-dn 3
+       number 2001
+      !
+      ephone 1
+       device-security-mode none
+       mac-address {{mac:PH1}}
+       type 7960
+       button 1:1
+      ephone 2
+       device-security-mode none
+       mac-address {{mac:PH2}}
+       type 7960
+       button 1:2
+      !
+      dial-peer voice 1 voip
+       destination-pattern 2001
+       session target ipv4:192.168.1.2
+      !
+      line con 0
+       password cisco
+       login
+      line vty 0 4
+       password cisco
+       login
+      end
+
+  - model: 3560-24PS
+    name: CMESwitch
+    pos: 200, 400
+    cfg: |
+      version 12.2
+      hostname CMESwitch
+      interface FastEthernet0/1
+       switchport mode trunk
+       no shutdown
+      interface range FastEthernet0/2 - 3
+       switchport mode access
+       switchport voice vlan 1
+       spanning-tree portfast
+       no shutdown
+      interface range FastEthernet0/4 - 24
+       shutdown
+      interface Vlan1
+       ip address 10.20.1.11 255.255.255.0
+       no shutdown
+      ip default-gateway 10.20.1.1
+      end
+
+  - model: 7960
+    name: PH1
+    pos: 110, 580
+
+  - model: 7960
+    name: PH2
+    pos: 300, 580
+
+  - model: 2620XM
+    name: RemoteRouter
+    pos: 830, 220
+    install: WIC-2T
+    cfg: |
+      version 12.2
+      hostname RemoteRouter
+      ip dhcp pool VOICE
+       network 10.30.1.0 255.255.255.0
+       default-router 10.30.1.1
+       option 150 ip 10.20.1.1
+      ip dhcp pool PHONE-2001
+       host 10.30.1.2 255.255.255.0
+       client-identifier {{client_id:PH3}}
+       default-router 10.30.1.1
+       option 150 ip 10.20.1.1
+      !
+      interface FastEthernet0/0
+       no ip address
+       no shutdown
+      interface FastEthernet0/0.30
+       encapsulation dot1Q 30
+       ip address 10.30.1.1 255.255.255.0
+      interface Serial0/0
+       ip address 192.168.1.2 255.255.255.252
+       no shutdown
+      router eigrp 1
+       network 10.0.0.0
+       network 192.168.1.0
+       no auto-summary
+      dial-peer voice 1 voip
+       destination-pattern 1001
+       session target ipv4:192.168.1.1
+      end
+
+  - model: 3560-24PS
+    name: RemoteSwitch
+    pos: 830, 400
+    cfg: |
+      version 12.2
+      hostname RemoteSwitch
+      vlan 30
+       name VOICE
+      interface FastEthernet0/1
+       switchport mode trunk
+       switchport trunk allowed vlan 30,40
+       no shutdown
+      interface FastEthernet0/2
+       switchport mode access
+       switchport access vlan 40
+       switchport voice vlan 30
+       spanning-tree portfast
+       no shutdown
+      interface Vlan40
+       ip address 10.40.1.11 255.255.255.0
+       no shutdown
+      ip default-gateway 10.40.1.1
+      end
+
+  - model: 7960
+    name: PH3
+    pos: 830, 580
+
+links:
+  - [CMERouter, FastEthernet0/0, CMESwitch, FastEthernet0/1, copper]
+  - [RemoteRouter, FastEthernet0/0, RemoteSwitch, FastEthernet0/1, copper]
+  - [CMESwitch, FastEthernet0/2, PH1, Switch]
+  - [CMESwitch, FastEthernet0/3, PH2, Switch]
+  - [RemoteSwitch, FastEthernet0/2, PH3, Switch]
+  - [CMERouter, Serial0/0/0, RemoteRouter, Serial0/0, serial, CMERouter, 64000]
