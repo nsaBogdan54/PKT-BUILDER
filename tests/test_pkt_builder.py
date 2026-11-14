@@ -1,6 +1,6 @@
 ﻿#!/usr/bin/env python3
 # -*- coding: utf-8 -*-
-"""Tests for pkt_builder.  Run:  python pkt_builder/tests/test_pkt_builder.py"""
+"""Tests for pkt_builder.  Run:  python -m unittest discover -s tests -p "test_*.py" """
 from __future__ import annotations
 
 import os

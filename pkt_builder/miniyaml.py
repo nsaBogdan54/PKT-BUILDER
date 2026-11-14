@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 """miniyaml.py -- a small, dependency-free YAML subset parser.
 
-Written for ``pkt_builder.py`` because the tool must run on a stock Python with
+Written for :mod:`pkt_builder` because the tool must run on a stock Python with
 no ``pip install`` step (same rule as ``pkt_core``).  It supports exactly the
 YAML this tool's config format uses:
 

@@ -1,4 +1,4 @@
-﻿# pkt_builder
+﻿# PKT_BUILDER
 
 Собирает рабочий `.pkt` для **Cisco Packet Tracer** из YAML-описания и умеет
 обратное — выгружать `.pkt` в YAML.
@@ -15,8 +15,8 @@
 окна «Incompatible File».
 
 ```powershell
-python pkt_builder.py -c configs\configuration.yml -i projects\my_new.pkt
-python pkt_builder.py --export 9lab.pkt -o 9lab.yml
+python -m pkt_builder -c configs\configuration.yml -i projects\my_new.pkt
+python -m pkt_builder --export 9lab.pkt -o 9lab.yml
 ```
 
 ## Установка
@@ -26,9 +26,19 @@ python pkt_builder.py --export 9lab.pkt -o 9lab.yml
 
 ```powershell
 git clone https://github.com/nsaBogdan54/PKT-BUILDER.git
-cd pkt_builder
+cd PKT-BUILDER
+python -m pkt_builder -c examples\lab8.yml -i 8lab_new.pkt
+```
+
+`python -m pkt_builder` работает из корня репозитория (там, где лежит папка
+`pkt_builder/`). Если так удобнее, есть и короткий запуск через файл-обёртку:
+
+```powershell
 python pkt_builder.py -c examples\lab8.yml -i 8lab_new.pkt
 ```
+
+Оба варианта делают одно и то же — а вот старый вид `python pkt_builder\pkt_builder.py`
+не сработает: `pkt_builder` — это пакет, внутри которого лежит CLI (`cli.py`).
 
 Опционально, чтобы YAML парсился через PyYAML (быстрее и строже):
 
@@ -42,20 +52,29 @@ pip install pyyaml
 ### Структура
 
 ```
-pkt_builder/
-├─ pkt_builder.py        CLI: YAML -> .pkt и .pkt -> YAML
-├─ build_8lab.py        скрипт, которым собран эталонный 8lab.pkt
-├─ 8lab.pkt             эталонный результат (принят PT 9.0.0)
-├─ pkt_core/            библиотека .pkt: Lab(), кодек, крипто, шаблоны моделей
-│  ├─ builder/          add_device / link / prune_seed_devices / save
-│  ├─ codec/            чтение и запись контейнера .pkt (zlib + XML)
-│  ├─ crypto/           подпись и шифрование полезной нагрузки
-│  └─ data/             device_templates.json, network_seed.xml
-├─ donors/              донорские .pkt, чья VERSION точно открывается
-├─ tools/               verify_8lab.py, pt_accept.ps1
-├─ examples/            примеры YAML
-├─ tests/               юнит-тесты
-└─ docs/                формат, схема, валидация
+pkt_builder/                  корень репозитория
+├─ pkt_builder/               пакет (python -m pkt_builder)
+│  ├─ __main__.py             точка входа для -m
+│  ├─ cli.py                  CLI: разбор ключей, сборка, экспорт
+│  ├─ config.py               схема YAML и валидация
+│  ├─ builder.py              LabSpec -> .pkt
+│  ├─ exporter.py             .pkt -> YAML
+│  ├─ ports.py                каталог портов и сокращения имён
+│  ├─ verify.py               структурная проверка результата
+│  └─ miniyaml.py             YAML-парсер без зависимостей
+├─ pkt_builder.py             обёртка: python pkt_builder.py == python -m pkt_builder
+├─ build_8lab.py              скрипт, которым собран эталонный 8lab.pkt
+├─ 8lab.pkt                   эталонный результат (принят PT 9.0.0)
+├─ pkt_core/                  библиотека .pkt: Lab(), кодек, крипто, шаблоны моделей
+│  ├─ builder/                add_device / link / prune_seed_devices / save
+│  ├─ codec/                  чтение и запись контейнера .pkt (zlib + XML)
+│  ├─ crypto/                 подпись и шифрование полезной нагрузки
+│  └─ data/                   device_templates.json, network_seed.xml
+├─ donors/                    донорские .pkt, чья VERSION точно открывается
+├─ tools/                     verify_8lab.py, pt_accept.ps1
+├─ examples/                  примеры YAML
+├─ tests/                     юнит-тесты
+└─ docs/                      формат, схема, валидация
 ```
 
 ## Ключи
@@ -160,7 +179,7 @@ File».
 Реальная проверка:
 
 ```powershell
-python pkt_builder.py -c examples\lab8.yml -i out.pkt --accept
+python -m pkt_builder -c examples\lab8.yml -i out.pkt --accept
 ```
 
 `--accept` запускает `tools/pt_accept.ps1`, который ищет Packet Tracer по
@@ -181,8 +200,8 @@ C:\Program Files (x86)\Cisco Packet Tracer 8.2.2\bin\PacketTracer.exe
 ## Экспорт `.pkt` → YAML
 
 ```powershell
-python pkt_builder.py --export 9lab.pkt -o 9lab.yml
-python pkt_builder.py --export 9lab.pkt          # -> 9lab.yml рядом с .pkt
+python -m pkt_builder --export 9lab.pkt -o 9lab.yml
+python -m pkt_builder --export 9lab.pkt          # -> 9lab.yml рядом с .pkt
 ```
 
 Восстанавливается всё, что нужно для повторной сборки:

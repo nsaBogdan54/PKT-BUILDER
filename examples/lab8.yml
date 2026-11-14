@@ -1,6 +1,6 @@
 # pkt_builder -- lab 8 (CME + remote site) written in the YAML format.
 #
-#   python pkt_builder.py -c examples\lab8.yml -i 8lab_out.pkt
+#   python -m pkt_builder -c examples\lab8.yml -i 8lab_out.pkt
 
 devices:
   - model: 2811
