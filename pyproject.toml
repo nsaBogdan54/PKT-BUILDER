@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "pkt-builder"
-version = "0.1.1"
+version = "0.1.2"
 description = "Build Cisco Packet Tracer .pkt files from a YAML description"
 readme = "README.md"
 requires-python = ">=3.10"
