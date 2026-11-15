@@ -11,7 +11,7 @@ Usage::
     pkt-builder -c %USERPROFILE%\\configs\\configuration.yml -i %USERPROFILE%\\projects\\my_new.pkt
 
     pkt-builder -c lab.yml -i lab.pkt --seed my_pt.pkt
-    pkt-builder -c lab.yml -i lab.pkt --check-only
+    pkt-builder -c lab.yml -o lab.pkt --check-only        # -o == -i in build mode
     pkt-builder -c lab.yml -i lab.pkt --accept
 
     pkt-builder --export lab.pkt -o lab.yml
@@ -229,18 +229,21 @@ def build_parser() -> argparse.ArgumentParser:
                     "or export a .pkt back to YAML.",
         epilog="Examples:\n"
                "  pkt-builder -c configs\\configuration.yml -i projects\\my_new.pkt\n"
+               "  pkt-builder -c configs\\configuration.yml -o projects\\my_new.pkt\n"
                "  pkt-builder --export 9lab.pkt -o 9lab.yml\n"
-               "  pkt-builder --help\n",
+               "  pkt-builder --help\n"
+               "\nIn build mode -o/--output is an alias for -i/--input.\n",
         formatter_class=argparse.RawDescriptionHelpFormatter,
     )
     parser.add_argument("-c", "--config", metavar="YAML",
                         help="input .yml/.yaml description (build mode)")
     parser.add_argument("-i", "--input", metavar="PKT",
-                        help="output .pkt file to write (build mode)")
+                        help="output .pkt file to write (build mode; -o is an alias)")
     parser.add_argument("--export", metavar="PKT",
                         help="export a .pkt to YAML instead of building")
-    parser.add_argument("-o", "--output", metavar="YAML",
-                        help="output .yml for --export (default: next to the .pkt)")
+    parser.add_argument("-o", "--output", metavar="PATH",
+                        help="output .yml for --export (default: next to the .pkt); "
+                             "in build mode an alias for -i/--input")
     parser.add_argument("--export-seed", metavar="PKT",
                         help="value written as 'seed:' in the exported YAML "
                              "(default: the exported file itself)")
@@ -268,8 +271,11 @@ def main(argv=None) -> int:
         return export_mode(args)
     if not args.config:
         parser.error("the following arguments are required: -c/--config")
+    if args.input and args.output and args.input != args.output:
+        parser.error("-i/--input and -o/--output are aliases; give only one")
+    args.input = args.input or args.output
     if not args.input:
-        parser.error("the following arguments are required: -i/--input")
+        parser.error("the following arguments are required: -i/--input (or -o/--output)")
 
     try:
         cfg_path = expand_path(args.config)

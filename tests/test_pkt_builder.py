@@ -348,6 +348,31 @@ class BuildTest(unittest.TestCase):
         self.assertEqual(proc.returncode, 0, proc.stderr)
         self.assertFalse(out.exists())
 
+    def test_output_flag_is_input_alias(self):
+        out = self.tmp / "alias.pkt"
+        proc = subprocess.run(
+            [sys.executable, str(SCRIPT), "-c", str(EXAMPLES / "lab8.yml"),
+             "-o", str(out), "-q"],
+            capture_output=True, text=True, cwd=str(ROOT))
+        self.assertEqual(proc.returncode, 0, proc.stderr)
+        self.assertTrue(out.exists())
+        self.assertTrue(verify_pkt(str(out)).ok)
+
+    def test_output_flag_without_config_is_rejected(self):
+        proc = subprocess.run(
+            [sys.executable, str(SCRIPT), "-o", str(self.tmp / "x.pkt"), "-q"],
+            capture_output=True, text=True, cwd=str(ROOT))
+        self.assertEqual(proc.returncode, 2)
+        self.assertIn("-c/--config", proc.stderr)
+
+    def test_conflicting_input_and_output(self):
+        proc = subprocess.run(
+            [sys.executable, str(SCRIPT), "-c", str(EXAMPLES / "lab8.yml"),
+             "-i", str(self.tmp / "a.pkt"), "-o", str(self.tmp / "b.pkt")],
+            capture_output=True, text=True, cwd=str(ROOT))
+        self.assertEqual(proc.returncode, 2)
+        self.assertIn("aliases", proc.stderr)
+
 
 # --------------------------------------------------------------------------- #
 class ExportTest(unittest.TestCase):
