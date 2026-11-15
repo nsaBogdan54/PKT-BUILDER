@@ -29,11 +29,11 @@ finall/
 
 # --- Packet Tracer files ---
 # .pkt are binary, so only the files the tool actually needs are kept:
-# the donors (templates whose VERSION is known to load) and the 8lab reference.
+# the bundled donors inside the package and the 8lab reference.
 *.pkt
 *.pka
 *.pkt.gz
-!donors/*.pkt
+!pkt_builder/data/*.pkt
 !8lab.pkt
 
 # --- OS / editor ---

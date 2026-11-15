@@ -5,6 +5,7 @@ from __future__ import annotations
 
 import os
 import pathlib
+import shutil
 import subprocess
 import sys
 import tempfile
@@ -14,18 +15,55 @@ HERE = pathlib.Path(__file__).resolve().parent
 PKG = HERE.parent
 ROOT = PKG.parent
 sys.path.insert(0, str(PKG))
-sys.path.insert(0, str(ROOT))
 
 from pkt_builder import miniyaml                                    # noqa: E402
 from pkt_builder.builder import client_id                           # noqa: E402
 from pkt_builder.config import ConfigError, parse_spec              # noqa: E402
 from pkt_builder.exporter import PktExportError, export_yaml, dump_yaml  # noqa: E402
 from pkt_builder.ports import PortError, port_catalogue, resolve_port  # noqa: E402
+from pkt_builder.resources import (                                 # noqa: E402
+    available_donors, donor_path, pt_accept_path,
+)
 from pkt_builder.verify import verify_pkt                           # noqa: E402
 
 SCRIPT = PKG / "pkt_builder.py"
 EXAMPLES = PKG / "examples"
-SEED = PKG / "donors" / "lab3_donor.pkt"
+SEED = donor_path()
+
+
+# --------------------------------------------------------------------------- #
+class ResourcesTest(unittest.TestCase):
+    def test_donor_path_exists(self):
+        path = donor_path()
+        self.assertTrue(path.is_file(), path)
+        self.assertEqual(path.name, "lab3_donor.pkt")
+
+    def test_pt_accept_path_exists(self):
+        path = pt_accept_path()
+        self.assertTrue(path.is_file(), path)
+
+    def test_available_donors(self):
+        names = available_donors()
+        self.assertIn("lab3_donor.pkt", names)
+        self.assertIn("lab7_donor.pkt", names)
+
+    def test_donor_path_absolute_passthrough(self):
+        absolute = pathlib.Path(tempfile.gettempdir()) / "own.pkt"
+        self.assertEqual(donor_path(str(absolute)), absolute)
+
+    def test_examples_have_no_seed(self):
+        for yml in EXAMPLES.glob("*.yml"):
+            text = yml.read_text(encoding="utf-8-sig")
+            self.assertNotIn("seed:", text, yml.name)
+
+    def test_console_script(self):
+        exe = shutil.which("pkt-builder")
+        if not exe:
+            self.skipTest("pkt-builder console script not on PATH")
+        proc = subprocess.run([exe, "--help"], capture_output=True, text=True,
+                              cwd=str(tempfile.gettempdir()))
+        self.assertEqual(proc.returncode, 0, proc.stderr)
+        self.assertIn("pkt-builder", proc.stdout)
 
 
 # --------------------------------------------------------------------------- #

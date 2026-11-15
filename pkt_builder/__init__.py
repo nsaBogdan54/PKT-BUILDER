@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: GPL-3.0-or-later
 """pkt_builder -- build Packet Tracer .pkt files from a YAML description.
 
 Modules
@@ -8,18 +9,26 @@ Modules
 ``builder``   LabSpec -> .pkt (the verified add/link/power/config order)
 ``verify``    structural checks that predict "Incompatible File"
 ``exporter``  .pkt -> YAML
-``cli``       command line interface (``python -m pkt_builder``)
+``resources`` access to the bundled donors and the acceptance harness
+``cli``       command line interface (the ``pkt-builder`` script)
+
+The vendored ``pkt_core`` library lives in ``pkt_builder/_vendor/pkt_core/``
+(GPL-3.0-or-later, unmodified upstream); this module puts
+``pkt_builder/_vendor`` on ``sys.path`` so the rest of the package can simply
+``import pkt_core``.  ``pkt_core`` uses absolute imports internally
+(``from pkt_core.x import y``), so keeping the upstream package name is the
+smallest possible shim.
 """
 import pathlib
 import sys
 
-# The repository root holds the vendored ``pkt_core`` package, and is also the
-# directory that makes ``pkt_builder`` itself importable.  Keeping it on the
-# path here means every submodule can just ``import pkt_core`` regardless of
-# where the interpreter was started.
-_ROOT = str(pathlib.Path(__file__).resolve().parent.parent)
-if _ROOT not in sys.path:
-    sys.path.insert(0, _ROOT)
+_HERE = pathlib.Path(__file__).resolve().parent
+
+_candidate = _HERE / "_vendor"
+if (_candidate / "pkt_core" / "__init__.py").is_file():
+    _path = str(_candidate)
+    if _path not in sys.path:
+        sys.path.insert(0, _path)
 
 from pkt_builder.config import ConfigError, DeviceSpec, LabSpec, LinkSpec, parse_spec
 from pkt_builder.ports import PortError, port_catalogue, resolve_port
@@ -34,3 +43,5 @@ __all__ = [
     "port_catalogue",
     "resolve_port",
 ]
+
+__version__ = "0.1.0"

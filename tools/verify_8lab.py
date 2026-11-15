@@ -20,8 +20,9 @@ import sys
 import xml.etree.ElementTree as ET
 
 HERE = pathlib.Path(__file__).resolve().parent
-sys.path.insert(0, str(HERE.parent))          # so pkt_core is importable
+sys.path.insert(0, str(HERE.parent))          # so `pkt_builder` is importable
 
+import pkt_builder                            # noqa: E402,F401  (registers vendored pkt_core)
 from pkt_core.codec.container import decode  # noqa: E402
 
 
