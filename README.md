@@ -2,8 +2,10 @@
 <div align="center">
 <h1> PKT-BUILDER </h1>
 
-Собирает рабочий `.pkt` для **Cisco Packet Tracer** из YAML-описания и умеет
-обратное — выгружать `.pkt` в YAML.
+**English** | [Русский](README.ru.md)
+
+Builds a working `.pkt` file for **Cisco Packet Tracer** from a YAML description,
+and does the reverse: exports an existing `.pkt` to YAML.
 
 [![Python](https://img.shields.io/badge/python-3.10%2B-3776AB?logo=python&logoColor=white)](https://www.python.org/)
 [![License](https://img.shields.io/badge/license-MIT-green)](LICENSE)
@@ -13,12 +15,13 @@
 </div>
 <div align="center">
 
-![Топология lab8, открытая в Packet Tracer 9.0.0](docs/topology.png)
+![The lab8 topology opened in Packet Tracer 9.0.0](docs/topology.png)
 
 </div>
 
-Скриншот — `8lab.pkt`, собранный этим инструментом из
-[`examples/lab8.yml`](examples/lab8.yml) и открытый в Packet Tracer 9.0.0 без ошибок.
+The screenshot shows `8lab.pkt`, built by this tool from
+[`examples/lab8.yml`](examples/lab8.yml) and opened in Packet Tracer 9.0.0
+without any errors.
 
 ```powershell
 python -m pkt_builder -c configs\configuration.yml -i projects\my_new.pkt
@@ -26,10 +29,11 @@ python -m pkt_builder --export 9lab.pkt -o 9lab.yml
 ```
 
 
-## Установка
+## Installation
 
-Зависимостей нет: PyYAML используется, если установлен, иначе работает
-встроенный `miniyaml.py`. Нужен только Python 3.10+ и этот репозиторий.
+There are no dependencies: PyYAML is used if it is installed, otherwise the
+built-in `miniyaml.py` takes over. All you need is Python 3.10+ and this
+repository.
 
 ```powershell
 git clone https://github.com/nsaBogdan54/PKT-BUILDER.git
@@ -37,89 +41,90 @@ cd PKT-BUILDER
 python -m pkt_builder -c examples\lab8.yml -i 8lab_new.pkt
 ```
 
-`python -m pkt_builder` работает из корня репозитория (там, где лежит папка
-`pkt_builder/`). Если так удобнее, есть и короткий запуск через файл-обёртку:
+`python -m pkt_builder` works from the repository root (the folder that contains
+the `pkt_builder/` package). If you prefer something shorter, there is also a
+wrapper file:
 
 ```powershell
 python pkt_builder.py -c examples\lab8.yml -i 8lab_new.pkt
 ```
 
-Оба варианта делают одно и то же — а вот старый вид `python pkt_builder\pkt_builder.py`
-не сработает: `pkt_builder` — это пакет, внутри которого лежит CLI (`cli.py`).
+Both do exactly the same. The old form `python pkt_builder\pkt_builder.py` will
+not work: `pkt_builder` is a package, and the CLI lives inside it (`cli.py`).
 
-Опционально, чтобы YAML парсился через PyYAML (быстрее и строже):
+Optionally, install PyYAML to parse YAML with it (faster and stricter):
 
 ```powershell
 pip install pyyaml
 ```
 
-`PKT_BUILDER_YAML=mini` в окружении принудительно включает встроенный парсер —
-полезно, чтобы проверить, что конфиг не зависит от PyYAML.
+Setting `PKT_BUILDER_YAML=mini` in the environment forces the built-in parser.
+That is handy for checking that your config does not depend on PyYAML.
 
 
-### Структура
+### Structure
 
 ```
-pkt_builder/                  корень репозитория
-├─ pkt_builder/               пакет (python -m pkt_builder)
-│  ├─ __main__.py             точка входа для -m
-│  ├─ cli.py                  CLI: разбор ключей, сборка, экспорт
-│  ├─ config.py               схема YAML и валидация
+pkt_builder/                  repository root
+├─ pkt_builder/               package (python -m pkt_builder)
+│  ├─ __main__.py             entry point for -m
+│  ├─ cli.py                  CLI: argument parsing, build, export
+│  ├─ config.py               YAML schema and validation
 │  ├─ builder.py              LabSpec -> .pkt
 │  ├─ exporter.py             .pkt -> YAML
-│  ├─ ports.py                каталог портов и сокращения имён
-│  ├─ verify.py               структурная проверка результата
-│  └─ miniyaml.py             YAML-парсер без зависимостей
-├─ pkt_builder.py             обёртка: python pkt_builder.py == python -m pkt_builder
-├─ build_8lab.py              скрипт, которым собран эталонный 8lab.pkt
-├─ 8lab.pkt                   эталонный результат (принят PT 9.0.0)
-├─ pkt_core/                  библиотека .pkt: Lab(), кодек, крипто, шаблоны моделей
+│  ├─ ports.py                port catalog and name abbreviations
+│  ├─ verify.py               structural check of the result
+│  └─ miniyaml.py             dependency-free YAML parser
+├─ pkt_builder.py             wrapper: python pkt_builder.py == python -m pkt_builder
+├─ build_8lab.py              script that produced the reference 8lab.pkt
+├─ 8lab.pkt                   reference result (accepted by PT 9.0.0)
+├─ pkt_core/                  .pkt library: Lab(), codec, crypto, model templates
 │  ├─ builder/                add_device / link / prune_seed_devices / save
-│  ├─ codec/                  чтение и запись контейнера .pkt (zlib + XML)
-│  ├─ crypto/                 подпись и шифрование полезной нагрузки
+│  ├─ codec/                  read and write the .pkt container (zlib + XML)
+│  ├─ crypto/                 payload signing and encryption
 │  └─ data/                   device_templates.json, network_seed.xml
-├─ donors/                    донорские .pkt, чья VERSION точно открывается
+├─ donors/                    donor .pkt files whose VERSION is known to open
 ├─ tools/                     verify_8lab.py, pt_accept.ps1
-├─ examples/                  примеры YAML
-├─ tests/                     юнит-тесты
-└─ docs/                      формат, схема, валидация
+├─ examples/                  sample YAML files
+├─ tests/                     unit tests
+└─ docs/                      format, schema, validation
 ```
 
 
-## Ключи
+## Command-line options
 
-| Ключ | Значение |
+| Option | Meaning |
 |---|---|
-| `-c, --config` | входной `.yml` (режим сборки) |
-| `-i, --input` | **выходной** `.pkt` (режим сборки) |
-| `--export PKT` | выгрузить `.pkt` в YAML (вместо сборки) |
-| `-o, --output` | выходной `.yml` для `--export` (по умолчанию рядом с `.pkt`) |
-| `--export-seed` | что записать в `seed:` (по умолчанию — путь к исходному `.pkt`) |
-| `-s, --seed` | донорский `.pkt` как шаблон (по умолчанию `donors/lab3_donor.pkt`) |
-| `--check-only` | только проверить конфиг, ничего не писать |
-| `--no-verify` | не делать структурную проверку результата |
-| `--accept` | дополнительно открыть файл в Packet Tracer (≈60 с, только Windows) |
-| `-q / -v` | тихий режим / печатать все строки конфигов |
+| `-c, --config` | input `.yml` (build mode) |
+| `-i, --input` | **output** `.pkt` (build mode) |
+| `--export PKT` | export a `.pkt` to YAML (instead of building) |
+| `-o, --output` | output `.yml` for `--export` (defaults to next to the `.pkt`) |
+| `--export-seed` | what to write into `seed:` (default: path to the source `.pkt`) |
+| `-s, --seed` | donor `.pkt` used as a template (default `donors/lab3_donor.pkt`) |
+| `--check-only` | validate the config only, write nothing |
+| `--no-verify` | skip the structural check of the result |
+| `--accept` | also open the file in Packet Tracer (about 60 s, Windows only) |
+| `-q / -v` | quiet mode / print every config line |
 
-Пути понимают `~`, `%USERPROFILE%`, `$HOME`. Относительные пути (`seed:`,
-`-c`, `-i`) считаются от каталога конфига.
+Paths understand `~`, `%USERPROFILE%` and `$HOME`. Relative paths (`seed:`,
+`-c`, `-i`) are resolved from the config directory.
 
-Exit codes: `0` — успех, `1` — ошибка конфига или сборки, `2` — Packet Tracer
-не найден (`--accept`).
+Exit codes: `0` — success, `1` — config or build error, `2` — Packet Tracer
+not found (`--accept`).
 
 
-## Схема YAML
+## YAML schema
 
 ```yaml
-seed: donors/lab3_donor.pkt        # необязательно, относительно вашего .yml
-defaults:                          # необязательные значения для всех устройств
+seed: donors/lab3_donor.pkt        # optional, relative to your .yml
+defaults:                          # optional values for all devices
   power: true
 
 devices:
-  - model: 2911                    # ключ из pkt_core/data/device_templates.json
+  - model: 2911                    # key from pkt_core/data/device_templates.json
     name: HQswitch
-    pos: 200, 235                  # "x, y" | [x, y]; без pos — автораскладка
-    install: HWIC-2T               # модуль или список модулей
+    pos: 200, 235                  # "x, y" | [x, y]; omit pos for auto-layout
+    install: HWIC-2T               # a module or a list of modules
     power: true
     pc_ip: [10.0.0.10, 255.255.255.0, 10.0.0.1]   # PC / Server
     cfg: |
@@ -139,64 +144,64 @@ links:
 ```
 
 
-### Устройства
+### Devices
 
-* `model` — ключ из `pkt_core/data/device_templates.json` (`2911`, `2811`,
+* `model` — a key from `pkt_core/data/device_templates.json` (`2911`, `2811`,
   `2620XM`, `3560-24PS`, `2960-24TT`, `7960`, `PC-PT`, `Server-PT`, …).
-* `install` — модуль или список (`HWIC-2T`, `WIC-2T`, `NM-4A/S`, `NIM-2T` …).
-  Без модуля у 2811 нет `Serial0/0/x`.
-* `cfg` — строки (block scalar) или список строк; каждая строка — как в
-  выводе `show running-config`. Лишние пробелы в начале сохраняются.
-  Поддерживаются подстановки `{{mac:PH1}}`, `{{client_id:PH1}}`, `{{name}}` —
-  MAC-адреса читаются из XML уже после создания устройств.
+* `install` — a module or a list (`HWIC-2T`, `WIC-2T`, `NM-4A/S`, `NIM-2T` …).
+  Without a module, a 2811 has no `Serial0/0/x` ports.
+* `cfg` — lines (a block scalar) or a list of strings; each line is written as
+  in the `show running-config` output. Leading extra spaces are preserved.
+  Placeholders `{{mac:PH1}}`, `{{client_id:PH1}}` and `{{name}}` are supported.
+  MAC addresses are read from the XML after the devices are created.
 
 
-### Линки
+### Links
 
-Полная форма порта:
+Full port form:
 
 ```
 [device_a, port_a, device_b, port_b, (kind), (dce), (clock)]
 ```
 
-| Форма | Смысл |
+| Form | Meaning |
 |---|---|
-| `[A, B]` / `auto: [A, B]` | линк с типом и свободными портами автоматически |
-| `auto: [A, B, dce: A, clock: 64000]` | автоподбор, но serial-линк |
-| `[A, портA, B, портB]` | тип кабеля выводится из имён портов |
-| `[A, портA, B, портB, copper\|serial]` | тип кабеля явно |
-| `[.., serial, DCE]` | clock = 64000 по умолчанию |
-| `[.., serial, DCE, 64000]` | clock явно |
+| `[A, B]` / `auto: [A, B]` | pick the cable type and free ports automatically |
+| `auto: [A, B, dce: A, clock: 64000]` | auto-pick, but make it a serial link |
+| `[A, portA, B, portB]` | cable type is inferred from the port names |
+| `[A, portA, B, portB, copper\|serial]` | cable type given explicitly |
+| `[.., serial, DCE]` | clock = 64000 by default |
+| `[.., serial, DCE, 64000]` | clock given explicitly |
 
-3 элемента (`[A, B, copper]`) отклоняются как неоднозначные.
+Three-element links (`[A, B, copper]`) are rejected as ambiguous.
 
-Имена портов можно сокращать: `Fa0/2`, `g0/0/0`, `s0/0/0`. Программа сама
-приводит их к каноническому виду (`FastEthernet0/2`, …) и **проверяет, что
-такой порт у устройства есть** — иначе Packet Tracer покажет «Incompatible
-File».
+Port names can be abbreviated: `Fa0/2`, `g0/0/0`, `s0/0/0`. The tool expands
+them to the canonical form (`FastEthernet0/2`, …) and **checks that the device
+actually has that port**. Otherwise Packet Tracer would show
+"Incompatible File".
 
-У телефона 7960 два порта с нестандартными именами: `Switch` (аплинк) и `PC`
-(passthrough): `[CMESwitch, Fa0/2, PH1, Switch]`.
+The 7960 phone has two ports with non-standard names: `Switch` (uplink) and
+`PC` (passthrough): `[CMESwitch, Fa0/2, PH1, Switch]`.
 
-Порядок «устройства → линки → конфиги» соблюдается автоматически, поэтому
-`clock rate` на DCE не затирается конфигом.
+The order "devices → links → configs" is applied automatically, so a
+`clock rate` on a DCE port is not overwritten by the config.
 
 
-## Проверка результата
+## Verifying the result
 
-После сборки выполняется структурная проверка (без Packet Tracer): тег
-`VERSION`, количество устройств, `Switch` у 7960, `DCEDEV/DCEPORT` и clock rate
-на serial, `POWER` на медных портах, дубли кабелей. Итог — строка
-`VERDICT : structure looks OK` или список `ERROR`.
+After a build, a structural check runs without Packet Tracer: the `VERSION`
+tag, the device count, `Switch` on the 7960, `DCEDEV/DCEPORT` and clock rate on
+serial links, `POWER` on copper ports, and duplicate cables. The outcome is a
+single line `VERDICT : structure looks OK` or a list of `ERROR`s.
 
-Реальная проверка:
+A real check:
 
 ```powershell
 python -m pkt_builder -c examples\lab8.yml -i out.pkt --accept
 ```
 
-`--accept` запускает `tools/pt_accept.ps1`, который ищет Packet Tracer по
-**жёстко заданным путям**:
+`--accept` runs `tools/pt_accept.ps1`, which looks for Packet Tracer only at
+**hard-coded paths**:
 
 ```
 C:\Program Files\Cisco Packet Tracer 9.0.0\bin\PacketTracer.exe
@@ -204,76 +209,85 @@ C:\Program Files\Cisco Packet Tracer 8.2.2\bin\PacketTracer.exe
 C:\Program Files (x86)\Cisco Packet Tracer 8.2.2\bin\PacketTracer.exe
 ```
 
-Если PT установлен в другое место или вы не на Windows, `--accept` завершится
-с кодом `2` (`PacketTracer.exe not found`) — это ожидаемо, сама сборка от этого
-не зависит. Чтобы добавить свой путь, допишите его в массив `$pt` в
-`tools/pt_accept.ps1`. Скрипт закрывает запущенный Packet Tracer и после
-проверки тоже.
+If Packet Tracer is installed somewhere else, or you are not on Windows,
+`--accept` exits with code `2` (`PacketTracer.exe not found`). This is expected:
+the build itself does not depend on it. To add your own path, append it to the
+`$pt` array in `tools/pt_accept.ps1`. The script closes a running Packet Tracer
+before the check and after it.
 
 
-## Экспорт `.pkt` → YAML
+## Export `.pkt` → YAML
 
 ```powershell
 python -m pkt_builder --export 9lab.pkt -o 9lab.yml
-python -m pkt_builder --export 9lab.pkt          # -> 9lab.yml рядом с .pkt
+python -m pkt_builder --export 9lab.pkt          # -> 9lab.yml next to the .pkt
 ```
 
-Восстанавливается всё, что нужно для повторной сборки:
+Everything needed for a rebuild is restored:
 
-* `model`, `name`, `pos` (из `WORKSPACE/LOGICAL`), `install` (установленные
-  интерфейсные карты), `power: false` для выключенных, `description`;
-* `cfg` — полный `RUNNINGCONFIG` построчно (block scalar `|`);
-* для PC/Server — `pc_ip` и `dhcp`;
-* `links` — с явными портами; у serial — `dce` (из `DCEDEV`) и `clock`
-  (из `CLOCKRATE` DCE-порта);
-* `seed:` — путь к исходному `.pkt`, т.к. его `VERSION` гарантированно
-  открывается вашим Packet Tracer (относительно каталога выходного `.yml`).
+* `model`, `name`, `pos` (from `WORKSPACE/LOGICAL`), `install` (installed
+  interface cards), `power: false` for powered-off devices, `description`;
+* `cfg` — the full `RUNNINGCONFIG`, line by line (a `|` block scalar);
+* for PC/Server — `pc_ip` and `dhcp`;
+* `links` — with explicit ports; for serial links, `dce` (from `DCEDEV`) and
+  `clock` (from the DCE port's `CLOCKRATE`);
+* `seed:` — the path to the source `.pkt`, because its `VERSION` is guaranteed
+  to open in your Packet Tracer (relative to the output `.yml` directory).
 
-Экспортированный YAML — обычный входной файл: `-c exported.yml -i new.pkt`
-собирает ту же топологию (проверено round-trip: устройства, конфиги и линки
-совпадают, файл принимается PT 9.0.0).
+The exported YAML is a normal input file: `-c exported.yml -i new.pkt` builds
+the same topology. This round-trip has been verified — devices, configs and
+links match, and the file is accepted by PT 9.0.0.
 
 
-## Примеры
+## Examples
 
-| Файл | Что показывает |
+| File | What it shows |
 |---|---|
-| `examples/lab8.yml` | полная лаба 8 (CME + удалённая площадка), эквивалент `8lab.pkt` |
-| `examples/link_forms.yml` | все формы записи `links` |
-| `examples/end_devices.yml` | PC/Server с `pc_ip`, автораскладка |
-| `examples/two_sites.yml` | два роутера, два коммутатора, serial между ними |
-| `examples/minimal.yml` | минимум: одно устройство и конфиг |
-| `examples/bad_phone_port.yml` | как выглядит ошибка про порт телефона |
+| `examples/lab8.yml` | the full lab 8 (CME + remote site), equivalent to `8lab.pkt` |
+| `examples/link_forms.yml` | every way to write `links` |
+| `examples/end_devices.yml` | PC/Server with `pc_ip`, auto-layout |
+| `examples/two_sites.yml` | two routers, two switches, a serial link between them |
+| `examples/minimal.yml` | the minimum: one device and a config |
+| `examples/bad_phone_port.yml` | what the phone-port error looks like |
 
 
-## Тесты
+## Tests
 
 ```powershell
 python -m unittest discover -s tests -p "test_*.py"
 ```
 
-Тесты собирают примеры во временный каталог, поэтому ничего в репозитории не
-меняют. `--accept` в тесты не входит: ему нужен установленный Packet Tracer.
-Тесты, требующие PyYAML, пропускаются, если его нет.
+The tests build the examples into a temporary directory, so nothing in the
+repository is changed. `--accept` is not part of the test run because it needs
+an installed Packet Tracer. Tests that require PyYAML are skipped when it is
+missing.
 
 
-## Ограничения
+## Limitations
 
-* Модели, у которых имена интерфейсов не выводятся из шаблона (концентраторы,
-  IoT, Cloud-PT), проверяются мягче: порт принимается как написан.
-* `VERSION` берётся из донора. Если ваш PT старее донора — файл будет отвергнут;
-  положите свой `.pkt` в `donors/` и передайте `-s`.
-* Wireless-связи (`set_wireless`) через YAML пока не настраиваются — только
-  кабельные линки.
-* `--accept` работает только на Windows (см. выше).
+* Models whose interface names cannot be derived from a template (hubs, IoT,
+  Cloud-PT) are checked more loosely: the port is accepted as written.
+* `VERSION` comes from the donor file. If your Packet Tracer is older than the
+  donor, the file will be rejected. Put your own `.pkt` into `donors/` and pass
+  it with `-s`.
+* Wireless links (`set_wireless`) are not configurable through YAML yet — only
+  cable links are supported.
+* `--accept` works on Windows only (see above).
 
 
-## Отказ от ответственности (Disclaimer)
+## Disclaimer
 
-1. **Образовательные цели:** Данный инструмент создан исключительно для автоматизации учебных лабораторных работ и образовательных целей.
-2. **Расходы на API:** Автор не несет ответственности за любые финансовые расходы пользователей, связанные с использованием сторонних API (например, RouterAI, OpenAI и др.) для генерации YAML-конфигураций или работы скрипта.
-3. **Cisco Packet Tracer EULA:** Cisco Packet Tracer является проприетарным программным обеспечением Cisco Systems, Inc. Использование данного генератора не должно нарушать Лицензионное соглашение конечного пользователя (EULA) Cisco. Автор не аффилирован с Cisco Systems и не несет ответственности за последствия использования сгенерированных `.pkt` файлов в коммерческой или производственной среде.
+1. **Educational use:** This tool was created solely to automate educational
+   lab work and for educational purposes.
+2. **API costs:** The author is not responsible for any financial expenses
+   users may incur from third-party APIs (e.g. RouterAI, OpenAI and others)
+   used to generate YAML configs or to run the script.
+3. **Cisco Packet Tracer EULA:** Cisco Packet Tracer is proprietary software of
+   Cisco Systems, Inc. Using this generator must not violate Cisco's End User
+   License Agreement (EULA). The author is not affiliated with Cisco Systems
+   and is not responsible for the consequences of using generated `.pkt` files
+   in commercial or production environments.
 
-## Лицензия
+## License
 
 [MIT](LICENSE).
