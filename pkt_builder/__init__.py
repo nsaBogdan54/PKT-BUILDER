@@ -44,4 +44,4 @@ __all__ = [
     "resolve_port",
 ]
 
-__version__ = "0.1.0"
+__version__ = "0.1.3"
