@@ -1,5 +1,4 @@
 # exercise every documented link form
-seed: ../donors/lab3_donor.pkt
 
 devices:
   - {model: 2911, name: CMERouter, pos: [200, 200], install: HWIC-2T}

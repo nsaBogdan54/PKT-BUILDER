@@ -1,10 +1,11 @@
 #!/usr/bin/env python3
+# SPDX-License-Identifier: GPL-3.0-or-later
 # -*- coding: utf-8 -*-
 """config.py -- the pkt_builder YAML schema: parsing, normalisation, validation.
 
 The file describes a whole lab::
 
-    seed: donors/lab3_donor.pkt          # optional donor .pkt (version!); relative to this file
+    seed: my_donor.pkt                  # optional donor .pkt (version!); relative to this file
     defaults:                            # optional per-device defaults
       power: true
 

@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
+# SPDX-License-Identifier: GPL-3.0-or-later
 """cli.py -- command line entry point of :mod:`pkt_builder`.
 
 Builds a Cisco Packet Tracer .pkt from a YAML description, and exports a .pkt
@@ -7,13 +8,15 @@ back to YAML.
 
 Usage::
 
-    python -m pkt_builder -c %USERPROFILE%\\configs\\configuration.yml -i %USERPROFILE%\\projects\\my_new.pkt
+    pkt-builder -c %USERPROFILE%\\configs\\configuration.yml -i %USERPROFILE%\\projects\\my_new.pkt
 
-    python -m pkt_builder -c lab.yml -i lab.pkt --seed my_pt.pkt
-    python -m pkt_builder -c lab.yml -i lab.pkt --check-only
-    python -m pkt_builder -c lab.yml -i lab.pkt --accept
+    pkt-builder -c lab.yml -i lab.pkt --seed my_pt.pkt
+    pkt-builder -c lab.yml -o lab.pkt --check-only        # -o == -i in build mode
+    pkt-builder -c lab.yml -i lab.pkt --accept
 
-    python -m pkt_builder --export lab.pkt -o lab.yml
+    pkt-builder --export lab.pkt -o lab.yml
+
+``python -m pkt_builder`` and ``python pkt_builder.py`` do the same thing.
 
 The YAML schema is documented in ``pkt_builder/config.py`` and in README.md.
 Exit codes: 0 = success, 1 = build/validation error, 2 = Packet Tracer was not
@@ -28,19 +31,17 @@ import re
 import subprocess
 import sys
 
-HERE = pathlib.Path(__file__).resolve().parent      # pkt_builder/pkt_builder/
-PROJECT = HERE.parent                               # repository root
-sys.path.insert(0, str(HERE))
-sys.path.insert(0, str(PROJECT))                    # import pkt_builder.* and pkt_core
-
 from pkt_builder import miniyaml                            # noqa: E402
 from pkt_builder.config import ConfigError, parse_spec      # noqa: E402
 from pkt_builder.builder import build_lab, seed_version     # noqa: E402
 from pkt_builder.exporter import PktExportError, export_yaml  # noqa: E402
 from pkt_builder.ports import PortError                     # noqa: E402
+from pkt_builder.resources import (                         # noqa: E402
+    DEFAULT_DONOR, available_donors, donor_path, pt_accept_path,
+)
 
-DEFAULT_SEED = PROJECT / "donors" / "lab3_donor.pkt"
-PT_ACCEPT = PROJECT / "tools" / "pt_accept.ps1"
+DEFAULT_SEED = donor_path(DEFAULT_DONOR)
+PT_ACCEPT = pt_accept_path()
 
 
 # --------------------------------------------------------------------------- #
@@ -54,8 +55,9 @@ def expand_path(text: str, base: pathlib.Path | None = None) -> pathlib.Path:
 
     A relative path is taken relative to the config file's directory (falling
     back to the working directory) -- that is what people mean when the config
-    says ``seed: donors/lab3_donor.pkt`` (relative to the config, and the
-    default seed lives in ``pkt_builder/donors/``).
+    says ``seed: my_donor.pkt``.  Absolute paths are returned as they are.  A
+    bare ``seed:`` name that does not exist next to the config is looked up
+    among the donors bundled with the package (see ``main``).
     """
     text = str(text).strip().strip('"').strip("'")
     text = _WIN_ENV.sub(lambda m: os.environ.get(m.group(1), m.group(0)), text)
@@ -198,8 +200,8 @@ def export_mode(args) -> int:
 
 def run_accept(out_path: pathlib.Path) -> int:
     if not PT_ACCEPT.exists():
-        print("pt_accept.ps1 not found at %s" % PT_ACCEPT)
-        return 0
+        print("pt_accept.ps1 not found (--accept is Windows-only)")
+        return 2
     cmd = ["powershell", "-NoProfile", "-ExecutionPolicy", "Bypass",
            "-File", str(PT_ACCEPT), "-File", str(out_path)]
     print("running Packet Tracer acceptance check (takes ~60s) ...")
@@ -222,22 +224,26 @@ def run_accept(out_path: pathlib.Path) -> int:
 # --------------------------------------------------------------------------- #
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
-        prog="pkt_builder",
+        prog="pkt-builder",
         description="Build a Cisco Packet Tracer .pkt from a YAML description, "
                     "or export a .pkt back to YAML.",
         epilog="Examples:\n"
-               "  python -m pkt_builder -c configs\\configuration.yml -i projects\\my_new.pkt\n"
-               "  python -m pkt_builder --export 9lab.pkt -o 9lab.yml\n",
+               "  pkt-builder -c configs\\configuration.yml -i projects\\my_new.pkt\n"
+               "  pkt-builder -c configs\\configuration.yml -o projects\\my_new.pkt\n"
+               "  pkt-builder --export 9lab.pkt -o 9lab.yml\n"
+               "  pkt-builder --help\n"
+               "\nIn build mode -o/--output is an alias for -i/--input.\n",
         formatter_class=argparse.RawDescriptionHelpFormatter,
     )
     parser.add_argument("-c", "--config", metavar="YAML",
                         help="input .yml/.yaml description (build mode)")
     parser.add_argument("-i", "--input", metavar="PKT",
-                        help="output .pkt file to write (build mode)")
+                        help="output .pkt file to write (build mode; -o is an alias)")
     parser.add_argument("--export", metavar="PKT",
                         help="export a .pkt to YAML instead of building")
-    parser.add_argument("-o", "--output", metavar="YAML",
-                        help="output .yml for --export (default: next to the .pkt)")
+    parser.add_argument("-o", "--output", metavar="PATH",
+                        help="output .yml for --export (default: next to the .pkt); "
+                             "in build mode an alias for -i/--input")
     parser.add_argument("--export-seed", metavar="PKT",
                         help="value written as 'seed:' in the exported YAML "
                              "(default: the exported file itself)")
@@ -265,8 +271,11 @@ def main(argv=None) -> int:
         return export_mode(args)
     if not args.config:
         parser.error("the following arguments are required: -c/--config")
+    if args.input and args.output and args.input != args.output:
+        parser.error("-i/--input and -o/--output are aliases; give only one")
+    args.input = args.input or args.output
     if not args.input:
-        parser.error("the following arguments are required: -i/--input")
+        parser.error("the following arguments are required: -i/--input (or -o/--output)")
 
     try:
         cfg_path = expand_path(args.config)
@@ -292,7 +301,13 @@ def main(argv=None) -> int:
     seed = expand_path(args.seed) if args.seed else DEFAULT_SEED
     if args.seed is None and spec.seed:
         seed = expand_path(spec.seed, cfg_path.parent)
-
+        if (not seed.exists()
+                and not pathlib.Path(spec.seed).is_absolute()
+                and os.sep not in spec.seed and "/" not in spec.seed):
+            # a bare file name may refer to a donor bundled with the package
+            bundled = donor_path(spec.seed)
+            if bundled.exists():
+                seed = bundled
     if not args.quiet:
         print_plan(spec, out_path, seed, parsed_with, str(cfg_path), args.verbose)
 

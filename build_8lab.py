@@ -11,7 +11,7 @@ serial DCE, port power, ...).
 Run with the bundled interpreter:
     python312\\python.exe build_8lab.py
 
-Requires pkt_core/ next to this file (or on PYTHONPATH).
+Requires the ``pkt_builder`` package (the vendored ``pkt_core`` comes with it).
 """
 import sys
 import pathlib
@@ -20,15 +20,17 @@ import xml.etree.ElementTree as ET
 HERE = pathlib.Path(__file__).resolve().parent
 sys.path.insert(0, str(HERE))
 
+import pkt_builder  # noqa: E402,F401  (registers vendored pkt_core on sys.path)
 from pkt_core.builder import Lab  # noqa: E402
+from pkt_builder.resources import donor_path  # noqa: E402
 
 # --------------------------------------------------------------------------- #
 # EDIT THESE
 # --------------------------------------------------------------------------- #
 # Donor .pkt used as the template for the whole document (version tag, workspace,
 # root options). MUST be a file that your installed Packet Tracer itself opens.
-# `donors/lab3_donor.pkt` is Packet Tracer 9.0.0.0810 -- use it for PT 9.0.0.
-SEED = HERE / "donors" / "lab3_donor.pkt"
+# The bundled `lab3_donor.pkt` is Packet Tracer 9.0.0.0810 -- use it for PT 9.0.0.
+SEED = donor_path()
 
 # Output file
 OUT = HERE / "8lab.pkt"
@@ -87,7 +89,7 @@ lab.prune_seed_devices()          # removes donor devices AND their links/leaves
 # --------------------------------------------------------------------------- #
 # 2. Place devices
 #    add_device(model, name, x, y, install=<module>, ios_config=<lines>)
-#    Models available: see pkt_core/data/device_templates.json
+#    Models available: see pkt_builder/_vendor/pkt_core/data/device_templates.json
 #    Modules available: HWIC-2T, WIC-2T, NM-4A/S, ... (same file)
 # --------------------------------------------------------------------------- #
 cme = lab.add_device("2811", "CMERouter", 200, 220, install="HWIC-2T")

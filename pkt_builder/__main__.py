@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: GPL-3.0-or-later
 """``python -m pkt_builder`` -- run the command line interface."""
 
 import sys

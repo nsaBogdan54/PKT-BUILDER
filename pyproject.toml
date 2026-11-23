@@ -1,0 +1,56 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "pkt-builder"
+version = "0.1.2"
+description = "Build Cisco Packet Tracer .pkt files from a YAML description"
+readme = "README.md"
+requires-python = ">=3.10"
+license = { text = "GPL-3.0-or-later" }
+authors = [{ name = "nsaBogdan54" }]
+keywords = ["packet-tracer", "cisco", "yaml", "networking", "cli"]
+dependencies = []
+classifiers = [
+  "Development Status :: 4 - Beta",
+  "Environment :: Console",
+  "Intended Audience :: Education",
+  "Operating System :: OS Independent",
+  "Programming Language :: Python :: 3",
+  "Programming Language :: Python :: 3.10",
+  "Programming Language :: Python :: 3.11",
+  "Programming Language :: Python :: 3.12",
+  "Topic :: Education",
+  "Topic :: System :: Networking",
+  "License :: OSI Approved :: GNU General Public License v3 or later (GPLv3+)",
+]
+
+[project.optional-dependencies]
+yaml = ["pyyaml>=6"]
+test = ["pyyaml>=6"]
+
+[project.scripts]
+pkt-builder = "pkt_builder.cli:main"
+
+[project.urls]
+Homepage = "https://github.com/nsaBogdan54/PKT-BUILDER"
+Issues = "https://github.com/nsaBogdan54/PKT-BUILDER/issues"
+
+[tool.setuptools]
+packages = [
+  "pkt_builder",
+  "pkt_builder._vendor",
+  "pkt_builder._vendor.pkt_core",
+  "pkt_builder._vendor.pkt_core.builder",
+  "pkt_builder._vendor.pkt_core.cli",
+  "pkt_builder._vendor.pkt_core.codec",
+  "pkt_builder._vendor.pkt_core.crypto",
+  "pkt_builder._vendor.pkt_core.data",
+  "pkt_builder._vendor.pkt_core.models",
+  "pkt_builder._vendor.pkt_core.xml",
+]
+
+[tool.setuptools.package-data]
+pkt_builder = ["data/*.pkt", "data/*.ps1"]
+"pkt_builder._vendor.pkt_core" = ["data/*.json", "data/*.xml", "py.typed"]
