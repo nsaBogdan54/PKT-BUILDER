@@ -174,8 +174,12 @@ links:
   Without a module, a 2811 has no `Serial0/0/x` ports.
 * `cfg` — lines (a block scalar) or a list of strings; each line is written as
   in the `show running-config` output. Leading extra spaces are preserved.
-  Placeholders `{{mac:PH1}}`, `{{client_id:PH1}}` and `{{name}}` are supported.
-  MAC addresses are read from the XML after the devices are created.
+  Placeholders `{{mac:PH1}}`, `{{port_mac:PH1}}`, `{{client_id:PH1}}` and
+  `{{name}}` are supported. `{{mac}}`/`{{client_id}}` are the device's own MAC
+  (`<ENGINE><BUILD_IN_ADDR>`, or the first copper port when the model has no
+  chassis address) — that is what Packet Tracer shows for a phone and what
+  `ephone mac-address` matches. `{{port_mac}}` is the first port's MAC.
+  Addresses are read from the XML after the devices are created.
 
 
 ### Links

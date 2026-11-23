@@ -112,7 +112,10 @@ colour is initial-state behaviour, not a generation defect.
 ## 6. Load requirements (checklist)
 
 1. unique `<ENGINE>/<SAVE_REF_ID>` per device;
-2. unique `MACADDRESS`/`BIA` per port;
+2. one address per port (`BIA` = `MACADDRESS`), unique document-wide, and a
+   unique `<ENGINE>/BUILD_IN_ADDR` per device — this is also the chassis MAC a
+   switch's `Vlan1` interface uses, so identical switches no longer share it;
+   `IPV6_DEFAULT_LINK_LOCAL` is the EUI-64 of the port's new MAC;
 3. valid `<PHYSICAL>` scene placement;
 4. every `<LINK>` endpoint resolves (id + existing port).
 

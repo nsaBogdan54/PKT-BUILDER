@@ -90,7 +90,15 @@ $ python3 tools/build_configured_lab.py --seed base.pkt --saves /opt/pt/saves \
 For a generated file to load, every device must satisfy:
 
 1. unique `<ENGINE>/<SAVE_REF_ID>`  (links and the file resolve devices by it);
-2. unique `MACADDRESS`/`BIA` per port (cloning a template duplicates them);
+2. one address per port, unique document-wide, with `BIA` = `MACADDRESS`;
+   plus a unique `<ENGINE>/BUILD_IN_ADDR` per device (cloning a template
+   duplicates all of them - `BUILD_IN_ADDR` is the MAC PT shows for a phone
+   and the one `ephone mac-address` keys on; it is also the chassis MAC that
+   a switch's `Vlan1` SVI uses, so three identical switches showed one VLAN1
+   MAC before this was generated);
+   each port's `IPV6_DEFAULT_LINK_LOCAL` is regenerated as the EUI-64 of its
+   new MAC, and `WORKSPACE/LOGICAL/MEM_ADDR`/`DEV_ADDR` are made unique
+   per device;
 3. a valid `<PHYSICAL>` scene placement (reuse the seed's node);
 4. cables: `<FROM>`/`<TO>` = those ids, `<PORT>` = an interface that exists on
    that device (see [SCENE_GRAPH.md](SCENE_GRAPH.md) §3).

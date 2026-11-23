@@ -332,7 +332,11 @@ def main(argv=None) -> int:
         print()
         print("saved       : %s (%d bytes)" % (result.path, result.size))
         for name, mac in result.macs.items():
-            print("mac         : %-16s %s" % (name, mac))
+            port_mac = result.port_macs.get(name)
+            if port_mac and port_mac != mac:
+                print("mac         : %-16s %s  (first port %s)" % (name, mac, port_mac))
+            else:
+                print("mac         : %-16s %s" % (name, mac))
 
     status = 0
     if not args.no_verify:

@@ -37,7 +37,13 @@ OUT = HERE / "8lab.pkt"
 
 
 def mac_of(lab, dev):
-    """MAC of a device's first copper port -- needed for ephone/CALL config."""
+    """The device's own MAC -- what PT shows and CME `ephone` keys on.
+
+    Real saves prove this is ``<ENGINE><BUILD_IN_ADDR>``, not a port MAC.
+    """
+    build_in = (lab._els[dev].findtext("ENGINE/BUILD_IN_ADDR") or "").strip()
+    if build_in:
+        return build_in
     for p in lab._els[dev].iter("PORT"):
         if p.findtext("TYPE") == "eCopperFastEthernet":
             return p.findtext("MACADDRESS")

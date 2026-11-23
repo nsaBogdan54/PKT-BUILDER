@@ -77,6 +77,11 @@ def verify_pkt(path: str, max_version: tuple[int, ...] = (9, 0, 0)) -> Report:
 
     by_sid: dict[str, ET.Element] = {}
     names: dict[str, str] = {}
+    seen_mac: dict[str, str] = {}
+    seen_build_in: dict[str, str] = {}
+    seen_serial: dict[str, str] = {}
+    seen_link_local: dict[str, str] = {}
+    seen_mem: dict[str, str] = {}
     for dev in root.findall(".//NETWORK/DEVICES/DEVICE"):
         engine = dev.find("ENGINE")
         if engine is None:
@@ -98,6 +103,67 @@ def verify_pkt(path: str, max_version: tuple[int, ...] = (9, 0, 0)) -> Report:
         })
         if (engine.findtext("POWER") or "true").lower() != "true":
             report.warnings.append("%s: device is powered off" % name)
+
+        # Hardware identity: every port MAC/BIA must be unique across the whole
+        # document (a cloned template duplicates them) and BIA must equal the
+        # port's MACADDRESS -- they are one address in every real PT save.
+        build_in = (engine.findtext("BUILD_IN_ADDR") or "").strip()
+        if build_in:
+            if build_in in seen_build_in:
+                report.errors.append(
+                    "%s: BUILD_IN_ADDR %s is already used by %s "
+                    "(the phone/CME identity is not unique)"
+                    % (name, build_in, seen_build_in[build_in]))
+            else:
+                seen_build_in[build_in] = name
+        for port in dev.iter("PORT"):
+            mac = (port.findtext("MACADDRESS") or "").strip()
+            bia = (port.findtext("BIA") or "").strip()
+            if mac and bia and mac != bia:
+                report.errors.append(
+                    "%s: port MACADDRESS %s != BIA %s (they are one address)"
+                    % (name, mac, bia))
+            # BIA repeats the port's MACADDRESS, so count one address per port
+            value = mac or bia
+            if value:
+                if value in seen_mac:
+                    report.errors.append(
+                        "%s: MAC %s is already used by %s"
+                        % (name, value, seen_mac[value]))
+                else:
+                    seen_mac[value] = name
+
+        serial_no = (engine.findtext("SERIALNUMBER") or "").strip()
+        if serial_no:
+            if serial_no in seen_serial:
+                report.warnings.append(
+                    "%s: serial number %s is shared with %s"
+                    % (name, serial_no, seen_serial[serial_no]))
+            else:
+                seen_serial[serial_no] = name
+
+        # A port's IPv6 link-local is derived from its MAC, so a shared FE80::
+        # means the template's address survived the clone -- PT shows it as the
+        # interface address and two devices would answer to the same one.
+        for ll in dev.iter("IPV6_DEFAULT_LINK_LOCAL"):
+            value = (ll.text or "").strip().upper()
+            if not value:
+                continue
+            if value in seen_link_local:
+                report.errors.append(
+                    "%s: IPv6 link-local %s is already used by %s"
+                    % (name, value, seen_link_local[value]))
+            else:
+                seen_link_local[value] = name
+
+        mem_addr = (dev.findtext("WORKSPACE/LOGICAL/MEM_ADDR") or "").strip()
+        if mem_addr:
+            if mem_addr in seen_mem:
+                report.errors.append(
+                    "%s: MEM_ADDR %s is already used by %s"
+                    % (name, mem_addr, seen_mem[mem_addr]))
+            else:
+                seen_mem[mem_addr] = name
 
     cabled: dict[str, set[int]] = {sid: set() for sid in by_sid}
     for link in root.findall(".//NETWORK/LINKS/LINK"):

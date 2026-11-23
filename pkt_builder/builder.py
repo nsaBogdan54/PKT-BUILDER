@@ -34,7 +34,8 @@ from pkt_builder.ports import (
     with_modules,
 )
 
-__all__ = ["BuildResult", "build_lab", "copper_power", "set_cfg", "mac_of", "client_id"]
+__all__ = ["BuildResult", "build_lab", "copper_power", "set_cfg", "mac_of",
+           "port_mac_of", "client_id", "scrub_template_leftovers"]
 
 # Copper port element types whose <POWER> must be true for the cable to come up.
 _COPPER_PORT_TYPES = (
@@ -43,7 +44,7 @@ _COPPER_PORT_TYPES = (
     "eCopperEthernet",
 )
 
-_PLACEHOLDER = re.compile(r"\{\{\s*(mac|client_id)\s*:\s*([^{}]+?)\s*\}\}")
+_PLACEHOLDER = re.compile(r"\{\{\s*(mac|port_mac|client_id)\s*:\s*([^{}]+?)\s*\}\}")
 _PLACEHOLDER_NAME = re.compile(r"\{\{\s*name\s*\}\}")
 
 
@@ -54,6 +55,7 @@ class BuildResult:
     devices: list[DeviceSpec] = field(default_factory=list)
     links: list[tuple[str, str, str, str, str]] = field(default_factory=list)
     macs: dict[str, str] = field(default_factory=dict)
+    port_macs: dict[str, str] = field(default_factory=dict)
     warnings: list[str] = field(default_factory=list)
 
 
@@ -95,11 +97,68 @@ def set_cfg(lab: Lab, dev_id: str, lines: list[str]) -> None:
 
 
 def mac_of(lab: Lab, dev_id: str) -> str | None:
-    """MAC of the device's first copper port (what ephone/DHCP need)."""
-    for port in lab._els[dev_id].iter("PORT"):
+    """The device's own MAC address -- what PT shows and CME keys on.
+
+    Real Packet Tracer saves settle this: every ``ephone mac-address`` equals
+    the phone's ``<ENGINE><BUILD_IN_ADDR>`` and none equals a port MAC (9/9
+    entries across the bundled donors).  So the identity MAC is the chassis
+    address when the device has one, and the first copper port otherwise
+    (PC/laptop/switch templates carry no ``BUILD_IN_ADDR``).
+    """
+    el = lab._els[dev_id]
+    build_in = (el.findtext("ENGINE/BUILD_IN_ADDR") or "").strip()
+    if build_in:
+        return build_in
+    for port in el.iter("PORT"):
         if port.findtext("TYPE") in _COPPER_PORT_TYPES:
             return port.findtext("MACADDRESS")
     return None
+
+
+def port_mac_of(lab: Lab, dev_id: str, port_type: str | None = None) -> str | None:
+    """MAC of the device's first ``<PORT>`` (optionally of one port type)."""
+    for port in lab._els[dev_id].iter("PORT"):
+        if port_type is not None and port.findtext("TYPE") != port_type:
+            continue
+        mac = port.findtext("MACADDRESS")
+        if mac:
+            return mac
+    return None
+
+
+# Runtime state a harvested template carries but a generator never authors:
+# the donor lab's DHCP lease/reservation tables and DNS zone records.  Two
+# instances of one model would otherwise share them -- the same class of bug
+# as a duplicated MAC (a lease row names another host's MAC).
+#
+# Device *defaults* (a Server-PT's ``serverPool``, the factory ``cisco`` FTP
+# account) are deliberately kept: real Packet Tracer shows those on every
+# freshly dropped device, so they are not residue.
+_LEFTOVER_RECORDS = (
+    ("DHCP_POOL_LEASES", "*"),
+    ("DHCP_RESERVATIONS", "*"),
+    ("NAMESERVER-DATABASE", "RESOURCE-RECORD"),
+)
+
+
+def scrub_template_leftovers(el: ET.Element) -> int:
+    """Strip donor runtime records out of a freshly instantiated device.
+
+    Everything matched by :data:`_LEFTOVER_RECORDS` is state from the donor
+    save: it names the donor's own hosts, so keeping it duplicates identities
+    (DHCP leases with the template's MACs, DNS records for hosts that do not
+    exist in this lab) on every instance of the model.  Returns the number of
+    records removed.
+    """
+    removed = 0
+    for container_tag, record_tag in _LEFTOVER_RECORDS:
+        for container in list(el.iter(container_tag)):
+            victims = ([c for c in container] if record_tag == "*"
+                       else [c for c in container if c.tag == record_tag])
+            for victim in victims:
+                container.remove(victim)
+                removed += 1
+    return removed
 
 
 def client_id(mac: str) -> str:
@@ -174,15 +233,19 @@ def _kind_from_ports(link: LinkSpec, cats: dict[str, DevicePorts],
 # --------------------------------------------------------------------------- #
 # config placeholder expansion
 # --------------------------------------------------------------------------- #
-def _expand_cfg(lines: list[str], machine: DeviceSpec, macs: dict[str, str]) -> list[str]:
+def _expand_cfg(lines: list[str], machine: DeviceSpec, macs: dict[str, str],
+                port_macs: dict[str, str] | None = None) -> list[str]:
+    port_macs = port_macs or {}
+
     def repl(match: re.Match) -> str:
         field_name, target = match.group(1), match.group(2)
-        if target not in macs:
+        table = port_macs if field_name == "port_mac" else macs
+        if target not in table:
             raise ConfigError(
                 "devices[%d] (%s): placeholder {{%s:%s}} refers to an unknown "
                 "device or a device without a copper port"
                 % (machine.index, machine.name, field_name, target))
-        mac = macs[target]
+        mac = table[target]
         return client_id(mac) if field_name == "client_id" else mac
 
     out = []
@@ -324,6 +387,10 @@ def build_lab(spec: LabSpec, out_path: pathlib.Path, seed: pathlib.Path,
                 node = ET.SubElement(engine, "DESCRIPTION")
             node.text = dev.description
 
+        # Donor DHCP lease/DNS records name the donor's own hosts; keeping
+        # them duplicates real identities on every instance of the model.
+        scrub_template_leftovers(lab._els[dev_id])
+
         if dev.dhcp is not None:
             port = lab._els[dev_id].find(".//PORT")
             if port is not None:
@@ -354,16 +421,21 @@ def build_lab(spec: LabSpec, out_path: pathlib.Path, seed: pathlib.Path,
 
     # --- 7. configs ------------------------------------------------------- #
     macs: dict[str, str] = {}
+    port_macs: dict[str, str] = {}
     for dev in spec.devices:
         mac = mac_of(lab, ids[dev.name])
         if mac:
             macs[dev.name] = mac
+        p_mac = port_mac_of(lab, ids[dev.name])
+        if p_mac:
+            port_macs[dev.name] = p_mac
     result.macs = macs
+    result.port_macs = port_macs
 
     for dev in spec.devices:
         if dev.cfg is None:
             continue
-        lines = _expand_cfg(dev.cfg, dev, macs)
+        lines = _expand_cfg(dev.cfg, dev, macs, port_macs)
         set_cfg(lab, ids[dev.name], lines)
 
     # --- 8. save ---------------------------------------------------------- #

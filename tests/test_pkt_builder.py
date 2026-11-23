@@ -338,6 +338,106 @@ class BuildTest(unittest.TestCase):
         self.assertRegex(text, r"mac-address 0212\.0000\.[0-9A-F]{4}")
         self.assertRegex(text, r"client-identifier 010212\.0000\.[0-9A-F]{4}")
         self.assertNotIn("{{", text)
+        # {{mac:PH1}} is the phone's own MAC (BUILD_IN_ADDR), and it must
+        # differ from its first port MAC -- that is the bug this guards.
+        phone = [d for d in root.findall(".//NETWORK/DEVICES/DEVICE")
+                 if d.findtext("ENGINE/NAME") == "PH1"][0]
+        build_in = phone.findtext("ENGINE/BUILD_IN_ADDR")
+        first_port = next(p.findtext("MACADDRESS") for p in phone.iter("PORT"))
+        self.assertIn(build_in, text)
+        self.assertNotEqual(build_in, first_port)
+
+    def test_identical_models_get_distinct_identities(self):
+        """Three 7960s must not share MAC/BIA/BUILD_IN_ADDR/serial."""
+        cfg = self.tmp / "phones.yml"
+        cfg.write_text(
+            "seed: %s\n"
+            "devices:\n"
+            "  - {model: 2960-24TT, name: SW1}\n"
+            "  - {model: 7960, name: PH1}\n"
+            "  - {model: 7960, name: PH2}\n"
+            "  - {model: 7960, name: PH3}\n"
+            "links:\n"
+            "  - [SW1, Fa0/1, PH1, Switch]\n"
+            "  - [SW1, Fa0/2, PH2, Switch]\n"
+            "  - [SW1, Fa0/3, PH3, Switch]\n" % SEED, encoding="utf-8")
+        proc, out = self._run(cfg, "phones")
+        self.assertEqual(proc.returncode, 0, proc.stderr)
+        report = verify_pkt(str(out))
+        self.assertTrue(report.ok, report.errors)
+
+        from pkt_core.codec.container import decode
+        import xml.etree.ElementTree as ET
+        root = ET.fromstring(decode(str(out), None).xml)
+        phones = [d for d in root.findall(".//NETWORK/DEVICES/DEVICE")
+                  if (d.findtext("ENGINE/TYPE") or "").strip() == "IpPhone"]
+
+        def field(dev, path):
+            return dev.findtext(path)
+
+        for path in ("ENGINE/BUILD_IN_ADDR", "ENGINE/SERIALNUMBER"):
+            values = [field(p, path) for p in phones]
+            self.assertEqual(len(set(values)), 3, "%s not unique: %s" % (path, values))
+
+        build_ins = {field(p, "ENGINE/BUILD_IN_ADDR") for p in phones}
+        port_macs = [m for p in phones for m in
+                     (e.text for e in p.iter("MACADDRESS") if e.text)]
+        self.assertEqual(len(port_macs), 6)
+        self.assertEqual(len(set(port_macs)), 6, "port MACs repeat: %s" % port_macs)
+        self.assertFalse(build_ins & set(port_macs),
+                         "BUILD_IN_ADDR collides with a port MAC")
+
+        for port in root.iter("PORT"):
+            mac = (port.findtext("MACADDRESS") or "").strip()
+            bia = (port.findtext("BIA") or "").strip()
+            if mac or bia:
+                self.assertEqual(mac, bia, "BIA must equal MACADDRESS")
+
+    def test_identical_switches_get_distinct_vlan1_mac(self):
+        """Three identical switches must not share the MAC PT shows in VLAN1.
+
+        A switch has no <BUILD_IN_ADDR> of its own in the seed, and its SVI/Vlan1
+        MAC is the chassis address derived from the template.  Cloning the
+        template three times used to yield three switches with one VLAN1 MAC.
+        """
+        cfg = self.tmp / "switches.yml"
+        cfg.write_text(
+            "seed: %s\n"
+            "devices:\n"
+            "  - {model: 3560-24PS, name: SW1}\n"
+            "  - {model: 3560-24PS, name: SW2}\n"
+            "  - {model: 3560-24PS, name: SW3}\n"
+            "  - {model: PC-PT, name: PC1}\n"
+            "links: []\n" % SEED, encoding="utf-8")
+        proc, out = self._run(cfg, "switches")
+        self.assertEqual(proc.returncode, 0, proc.stderr)
+        report = verify_pkt(str(out))
+        self.assertTrue(report.ok, report.errors)
+
+        from pkt_core.codec.container import decode
+        import xml.etree.ElementTree as ET
+        root = ET.fromstring(decode(str(out), None).xml)
+        switches = [d for d in root.findall(".//NETWORK/DEVICES/DEVICE")
+                    if (d.findtext("ENGINE/TYPE") or "").strip() == "MultiLayerSwitch"]
+        self.assertEqual(len(switches), 3)
+
+        values = [d.findtext("ENGINE/BUILD_IN_ADDR") for d in switches]
+        self.assertEqual(len(set(values)), 3, "VLAN1/chassis MAC repeats: %s" % values)
+
+        # One MAC per port, port-wide unique, and linked to the link-local.
+        for dev in switches:
+            for port in dev.iter("PORT"):
+                mac = (port.findtext("MACADDRESS") or "").strip()
+                ll = (port.findtext("IPV6_DEFAULT_LINK_LOCAL") or "").strip()
+                if mac and ll:
+                    h = mac.replace(".", "")
+                    eui = "FE80::%X:%X:%X:%X" % (
+                        ((int(h[0:2], 16) ^ 2) << 8) | int(h[2:4], 16),
+                        (int(h[4:6], 16) << 8) | 0xFF,
+                        (0xFE << 8) | int(h[6:8], 16),
+                        (int(h[8:10], 16) << 8) | int(h[10:12], 16))
+                    self.assertEqual(ll.upper(), eui.upper(),
+                                     "link-local must follow the port MAC")
 
     def test_check_only_writes_nothing(self):
         out = self.tmp / "nothing.pkt"

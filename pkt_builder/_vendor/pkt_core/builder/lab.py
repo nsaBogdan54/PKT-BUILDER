@@ -612,6 +612,38 @@ def _det_uuid(*parts: object) -> str:
     return str(uuid.UUID(bytes=bytes(b)))
 
 
+def _link_local_from_mac(mac: str) -> str:
+    """``FE80::/64`` EUI-64 address for a dotted MAC (``00E0.F797.3701``).
+
+    Packet Tracer stores each port's IPv6 link-local alongside its MAC, computed
+    as RFC 4291 EUI-64 (flip the U/L bit, insert ``FF:FE``).  Cloning a template
+    copies that address verbatim, so two instances end up with the same
+    ``FE80::`` even once their MACs are distinct -- regenerate it from the new
+    MAC instead.
+    """
+    hexed = re.sub(r"[^0-9A-Fa-f]", "", mac).upper()
+    if len(hexed) != 12:
+        return ""
+    b = [int(hexed[i:i + 2], 16) for i in range(0, 12, 2)]
+    b[0] ^= 0x02                                    # universal/local bit
+    # PT prints each hextet without leading zeros: FE80::2E0:F7FF:FE97:3701
+    return "FE80::%X:%X:%X:%X" % (
+        (b[0] << 8) | b[1], (b[2] << 8) | 0xFF,
+        (0xFE << 8) | b[3], (b[4] << 8) | b[5])
+
+
+def _det_addr(*parts: object) -> int:
+    """A deterministic heap handle in the range real saves use.
+
+    ``MEM_ADDR``/``DEV_ADDR`` are pointer-sized integers PT assigns per device
+    at runtime.  The donors' values sit in the 1e8..3e12 range, so a SHA-256 of
+    stable inputs is masked into it instead of reusing the donor's number.
+    """
+    digest = hashlib.sha256(
+        "\x00".join(str(p) for p in parts).encode("utf-8")).digest()
+    return int.from_bytes(digest[:6], "big") % 2_000_000_000 + 100_000_000
+
+
 class Lab:
     def __init__(
         self,
@@ -657,6 +689,7 @@ class Lab:
         self._n = 0
         self._pos = 4
         self._mac = 0x2000
+        self._serial = 0x10000
         self._els = {}
 
     # -- physical workspace helpers ---------------------------------------- #
@@ -728,6 +761,87 @@ class Lab:
         n = self._mac
         return "%04X.%04X.%04X" % (0x0212, (n >> 16) & 0xFFFF, n & 0xFFFF)
 
+    def _format_mac(self, sample: str | None = None) -> str:
+        """A fresh MAC, rendered in the same style as ``sample``.
+
+        Port MACs are dotted (``0001.4298.1B01``) everywhere in PT, but a few
+        embedded records (Meraki device lists) store colon- or dash-separated
+        bytes; those keep their separators when refreshed.
+        """
+        dotted = self._next_mac()
+        hexed = dotted.replace(".", "").upper()
+        if sample and ":" in sample:
+            return ":".join(hexed[i:i + 2] for i in range(0, 12, 2))
+        if sample and "-" in sample:
+            return "-".join(hexed[i:i + 2] for i in range(0, 12, 2))
+        return dotted
+
+    def _assign_identities(self, root) -> None:
+        """Replace every hard-coded hardware address in a cloned device.
+
+        A harvested template carries the donor device's MACs and serial number
+        verbatim, so without this two instances of the same model share a MAC
+        -- including ``<ENGINE><BUILD_IN_ADDR>``, which is the MAC Packet
+        Tracer shows for an IP phone and the one ``ephone mac-address`` keys on
+        (verified against real saves: 9/9 ephone entries equal BUILD_IN_ADDR).
+
+        Rules:
+
+        * each ``<PORT>`` gets ONE address, written to both ``MACADDRESS`` and
+          ``BIA`` -- they are the same hardware address in every real file;
+        * every ``BUILD_IN_ADDR`` gets its own address, nested
+          ``<EMBEDDED_AP><ENGINE>`` included;
+        * identity MACs stored outside ``<PORT>`` (``CAPWAP_AC/APS/AP/MAC``,
+          ``MERAKI_DEVICE/MAC_ADDRESS``) are refreshed in place, keeping their
+          formatting.  DHCP lease MACs are left alone: they are template
+          residue and the builder strips them.
+        * ``<SERIALNUMBER>`` keeps its maker pattern (``PTT``, ``FTX``, ...)
+          but gets a unique chassis suffix.
+        """
+        for port in root.iter("PORT"):
+            nodes = [e for tag in ("MACADDRESS", "BIA") for e in port.iter(tag)]
+            if not nodes:
+                continue
+            mac = self._next_mac()
+            for e in nodes:
+                e.text = mac
+            # The IPv6 link-local is the EUI-64 form of this port's MAC.  It is
+            # cloned from the donor too, so leaving it alone gives every
+            # instance the same FE80:: address even when the MACs differ.
+            for e in port.iter("IPV6_DEFAULT_LINK_LOCAL"):
+                e.text = _link_local_from_mac(mac)
+        for e in root.iter("BUILD_IN_ADDR"):
+            e.text = self._next_mac()
+        # Runtime heap handles.  Real saves give every device its own pair (see
+        # the bundled donors), and two clones sharing them look like one object
+        # to PT's simulator.  Derived from the device index so a rebuild of the
+        # same spec is byte-identical.
+        for tag in ("MEM_ADDR", "DEV_ADDR"):
+            for e in root.iter(tag):
+                if (e.text or "").strip():
+                    e.text = str(_det_addr(tag, self._n, e.text))
+        for e in list(root.iter("SERIALNUMBER")) + list(root.iter("SERIAL")):
+            self._renumber_serial(e)
+        for ap in root.iter("AP"):
+            e = ap.find("MAC")
+            if e is not None and (e.text or "").strip():
+                e.text = self._format_mac(e.text)
+        for md in root.iter("MERAKI_DEVICE"):
+            e = md.find("MAC_ADDRESS")
+            if e is not None and (e.text or "").strip():
+                e.text = self._format_mac(e.text)
+
+    def _renumber_serial(self, node) -> None:
+        """Give ``<SERIALNUMBER>`` a unique suffix, keeping its maker prefix."""
+        text = (node.text or "").strip()
+        if not text:
+            return
+        # PTT0810YH80 / FTX1524HPC2 / CAT1010667C / FDO18220VFR-
+        m = re.match(r"^([A-Za-z]{2,4}\d{4})(.*)$", text)
+        prefix = m.group(1) if m else text[:8]
+        n = self._serial = self._serial + 1
+        node.text = "%s%05X" % (prefix.upper(), n & 0xFFFFF)
+
     def device_names(self) -> list[str]:
         """Return the names of every device currently in the lab, in document
         order.  This includes the devices inherited from the seed network
@@ -785,9 +899,7 @@ class Lab:
         cpur = self._make_cpur(px, leaf)
         s = re.sub(r"(<PHYSICAL>[^<]*</PHYSICAL>)", lambda m: m.group(1) + cpur, s, count=1)
         el = ET.fromstring(s)
-        for tag in ("MACADDRESS", "BIA"):
-            for e in el.iter(tag):
-                e.text = self._next_mac()
+        self._assign_identities(el)
         eng = el.find("ENGINE")
         for e in list(eng.findall("SAVE_REF_ID")):
             eng.remove(e)
@@ -890,9 +1002,7 @@ class Lab:
             target = empties[0]
 
         mod = ET.fromstring(self.modules[module_model])
-        for tag in ("MACADDRESS", "BIA"):
-            for e in mod.iter(tag):
-                e.text = self._next_mac()
+        self._assign_identities(mod)
         for c in list(target):
             target.remove(c)
         for c in list(mod):
